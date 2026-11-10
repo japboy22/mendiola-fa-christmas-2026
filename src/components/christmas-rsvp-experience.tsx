@@ -266,14 +266,6 @@ export function ChristmasRsvpExperience({
     }
   };
 
-  const handleResetForAnotherPlayer = () => {
-    setSubmittedRecord(null);
-    setPlayerName("");
-    setAttendanceStatus("Attending");
-    setTotalPax(isCoach ? 1 : 2);
-    setFormError(null);
-  };
-
   const filteredRecords = React.useMemo(() => {
     return records.filter((r) => {
       if (groupFilter !== "all" && r.roleOrAgeGroup !== groupFilter) {
@@ -615,9 +607,15 @@ export function ChristmasRsvpExperience({
                           )}
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="inline-flex items-center rounded-xl bg-white border border-red-200 px-2.5 py-1 font-mono text-xs font-extrabold text-primary shadow-2xs">
-                            {rec.totalPax} Pax
-                          </span>
+                          {rec.attendanceStatus === "Attending" ? (
+                            <span className="inline-flex items-center rounded-xl bg-white border border-red-200 px-2.5 py-1 font-mono text-xs font-extrabold text-primary shadow-2xs">
+                              {rec.totalPax} Pax
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-xl bg-zinc-100 border border-zinc-200 px-2.5 py-1 text-xs font-bold text-zinc-600">
+                              Not Attending
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -805,14 +803,16 @@ export function ChristmasRsvpExperience({
                             </h3>
                           </div>
 
-                          <div className="shrink-0 rounded-xl border border-red-200 bg-red-50/60 px-3 py-1.5 text-center">
-                            <div className="font-mono text-lg font-extrabold leading-none text-primary">
-                              {rec.totalPax}
+                          {rec.attendanceStatus === "Attending" && (
+                            <div className="shrink-0 rounded-xl border border-red-200 bg-red-50/60 px-3 py-1.5 text-center">
+                              <div className="font-mono text-lg font-extrabold leading-none text-primary">
+                                {rec.totalPax}
+                              </div>
+                              <div className="text-[10px] font-bold uppercase text-zinc-500">
+                                Pax
+                              </div>
                             </div>
-                            <div className="text-[10px] font-bold uppercase text-zinc-500">
-                              Pax
-                            </div>
-                          </div>
+                          )}
                         </div>
 
                         {!isRecCoach &&
@@ -989,11 +989,16 @@ export function ChristmasRsvpExperience({
                       <div className="min-w-0">
                         <Dialog.Title className="truncate text-base font-extrabold leading-tight text-white sm:text-lg">
                           {submittedRecord
-                            ? "Holiday Party Pass"
+                            ? submittedRecord.attendanceStatus === "Not Attending"
+                              ? "Not Attending"
+                              : "Holiday Party Pass"
                             : "Christmas Party RSVP"}
                         </Dialog.Title>
                         <Dialog.Description className="truncate text-[11px] text-red-100">
-                          Dec 15, 2026 · 3:00 PM · Valle Maria Mar, Bulacan
+                          {submittedRecord &&
+                          submittedRecord.attendanceStatus === "Not Attending"
+                            ? "Attendance response recorded"
+                            : "Dec 15, 2026 · 3:00 PM · Valle Maria Mar, Bulacan"}
                         </Dialog.Description>
                       </div>
                     </div>
@@ -1012,19 +1017,41 @@ export function ChristmasRsvpExperience({
                   {/* Scrollable Dialog Body */}
                   <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-[#FFFDFD] to-[#FFF7F6]">
                     {submittedRecord ? (
-                      /* DIGITAL HOLIDAY PARTY PASS INSIDE DIALOG */
+                      /* CONFIRMATION SCREEN INSIDE DIALOG (ATTENDING vs NOT ATTENDING) */
                       <motion.div
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.2 }}
                         className="space-y-5"
                       >
-                        <div className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5 shadow-sm">
-                          <div className="flex items-center justify-between gap-3 border-b border-red-100 pb-3.5">
+                        <div
+                          className={cn(
+                            "rounded-2xl border-2 p-4 sm:p-5 shadow-sm",
+                            submittedRecord.attendanceStatus === "Not Attending"
+                              ? "border-zinc-200 bg-zinc-50/80"
+                              : "border-red-200 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "flex items-center justify-between gap-3 border-b pb-3.5",
+                              submittedRecord.attendanceStatus === "Not Attending"
+                                ? "border-zinc-200"
+                                : "border-red-100"
+                            )}
+                          >
                             <div>
-                              <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white",
+                                  submittedRecord.attendanceStatus ===
+                                    "Not Attending"
+                                    ? "bg-zinc-800"
+                                    : "bg-primary"
+                                )}
+                              >
                                 {submittedRecord.roleOrAgeGroup === "Coach"
-                                  ? "COACH PASS"
+                                  ? "COACH"
                                   : `${submittedRecord.roleOrAgeGroup} DIVISION`}
                               </span>
                               <h3 className="mt-1.5 text-xl font-extrabold text-zinc-950">
@@ -1032,42 +1059,63 @@ export function ChristmasRsvpExperience({
                               </h3>
                             </div>
 
-                            <div className="rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-center shadow-2xs">
-                              <div className="text-[10px] font-bold uppercase text-zinc-500">
-                                Total Pax
+                            {submittedRecord.attendanceStatus === "Attending" && (
+                              <div className="rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-center shadow-2xs">
+                                <div className="text-[10px] font-bold uppercase text-zinc-500">
+                                  Total Pax
+                                </div>
+                                <div className="font-mono text-2xl font-extrabold text-primary">
+                                  {submittedRecord.totalPax}
+                                </div>
                               </div>
-                              <div className="font-mono text-2xl font-extrabold text-primary">
-                                {submittedRecord.totalPax}
-                              </div>
-                            </div>
+                            )}
                           </div>
 
                           <dl className="mt-3.5 grid grid-cols-2 gap-3 text-xs sm:text-sm">
-                            <div>
+                            <div
+                              className={cn(
+                                submittedRecord.attendanceStatus ===
+                                  "Not Attending" && "col-span-2"
+                              )}
+                            >
                               <dt className="text-[11px] font-semibold text-zinc-500">
                                 Status
                               </dt>
-                              <dd className="font-bold text-emerald-700">
+                              <dd
+                                className={cn(
+                                  "font-bold",
+                                  submittedRecord.attendanceStatus ===
+                                    "Not Attending"
+                                    ? "text-zinc-800"
+                                    : "text-emerald-700"
+                                )}
+                              >
                                 {submittedRecord.attendanceStatus}
                               </dd>
                             </div>
-                            <div>
-                              <dt className="text-[11px] font-semibold text-zinc-500">
-                                Dress Code Motif
-                              </dt>
-                              <dd className="font-bold text-primary">
-                                Red &amp; White Motif
-                              </dd>
-                            </div>
-                            <div className="col-span-2">
-                              <dt className="text-[11px] font-semibold text-zinc-500">
-                                Venue &amp; Time
-                              </dt>
-                              <dd className="font-bold text-zinc-950">
-                                Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan
-                                · Dec 15, 2026 @ 3:00 PM
-                              </dd>
-                            </div>
+
+                            {submittedRecord.attendanceStatus ===
+                              "Attending" && (
+                              <>
+                                <div>
+                                  <dt className="text-[11px] font-semibold text-zinc-500">
+                                    Dress Code Motif
+                                  </dt>
+                                  <dd className="font-bold text-primary">
+                                    Red &amp; White Motif
+                                  </dd>
+                                </div>
+                                <div className="col-span-2">
+                                  <dt className="text-[11px] font-semibold text-zinc-500">
+                                    Venue &amp; Time
+                                  </dt>
+                                  <dd className="font-bold text-zinc-950">
+                                    Valle Maria Mar, Sta. Cruz, Sta. Maria,
+                                    Bulacan · Dec 15, 2026 @ 3:00 PM
+                                  </dd>
+                                </div>
+                              </>
+                            )}
 
                             {submittedRecord.roleOrAgeGroup !== "Coach" && (
                               <>
@@ -1081,50 +1129,45 @@ export function ChristmasRsvpExperience({
                                     </dd>
                                   </div>
                                 )}
-                                {submittedRecord.companionNames && (
-                                  <div className="col-span-2 sm:col-span-1">
-                                    <dt className="text-[11px] font-semibold text-zinc-500">
-                                      Companions
-                                    </dt>
-                                    <dd className="font-bold text-zinc-950">
-                                      {submittedRecord.companionNames}
-                                    </dd>
-                                  </div>
-                                )}
-                                {submittedRecord.potluckNotes && (
-                                  <div className="col-span-2">
-                                    <dt className="text-[11px] font-semibold text-zinc-500">
-                                      Potluck / Notes
-                                    </dt>
-                                    <dd className="font-bold text-zinc-950">
-                                      {submittedRecord.potluckNotes}
-                                    </dd>
-                                  </div>
-                                )}
+                                {submittedRecord.attendanceStatus ===
+                                  "Attending" &&
+                                  submittedRecord.companionNames && (
+                                    <div className="col-span-2 sm:col-span-1">
+                                      <dt className="text-[11px] font-semibold text-zinc-500">
+                                        Companions
+                                      </dt>
+                                      <dd className="font-bold text-zinc-950">
+                                        {submittedRecord.companionNames}
+                                      </dd>
+                                    </div>
+                                  )}
+                                {submittedRecord.attendanceStatus ===
+                                  "Attending" &&
+                                  submittedRecord.potluckNotes && (
+                                    <div className="col-span-2">
+                                      <dt className="text-[11px] font-semibold text-zinc-500">
+                                        Potluck / Notes
+                                      </dt>
+                                      <dd className="font-bold text-zinc-950">
+                                        {submittedRecord.potluckNotes}
+                                      </dd>
+                                    </div>
+                                  )}
                               </>
                             )}
                           </dl>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            onClick={handleResetForAnotherPlayer}
-                            className="inline-flex h-11 items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-extrabold text-primary transition hover:bg-red-100 cursor-pointer"
-                          >
-                            + Add Another Player / Sibling
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsRsvpDialogOpen(false);
-                              setActiveTab("roster");
-                            }}
-                            className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
-                          >
-                            View Confirmed Guests
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRsvpDialogOpen(false);
+                            setActiveTab("roster");
+                          }}
+                          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
+                        >
+                          View Confirmed Guests
+                        </button>
                       </motion.div>
                     ) : (
                       /* CLEAN FESTIVE RSVP FORM INSIDE DIALOG */
