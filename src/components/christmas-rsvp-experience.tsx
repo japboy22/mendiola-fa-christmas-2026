@@ -200,6 +200,8 @@ export function ChristmasRsvpExperience({
 
     setIsSubmitting(true);
 
+    const isAttending = attendanceStatus === "Attending";
+
     try {
       const res = await fetch("/api/rsvp", {
         method: "POST",
@@ -208,11 +210,11 @@ export function ChristmasRsvpExperience({
           roleOrAgeGroup,
           playerName: trimmedName,
           attendanceStatus,
-          totalPax: attendanceStatus === "Attending" ? totalPax : 0,
+          totalPax: isAttending ? totalPax : 0,
           parentName: isCoach ? "" : parentName.trim(),
-          companionNames: isCoach ? "" : companionNames.trim(),
-          contactNumber: contactNumber.trim(),
-          potluckNotes: isCoach ? "" : potluckNotes.trim(),
+          companionNames: !isCoach && isAttending ? companionNames.trim() : "",
+          contactNumber: isAttending ? contactNumber.trim() : "",
+          potluckNotes: !isCoach && isAttending ? potluckNotes.trim() : "",
         }),
       });
 
@@ -1225,6 +1227,9 @@ export function ChristmasRsvpExperience({
                               onClick={() => {
                                 setAttendanceStatus("Not Attending");
                                 setTotalPax(0);
+                                setContactNumber("");
+                                setCompanionNames("");
+                                setPotluckNotes("");
                               }}
                               className={cn(
                                 "flex items-center justify-center rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
@@ -1318,18 +1323,24 @@ export function ChristmasRsvpExperience({
                           )}
                         </div>
 
-                        {/* 4. CONDITIONAL PLAYER vs COACH FIELDS */}
+                        {/* 4. CONDITIONAL PLAYER vs COACH & ATTENDANCE FIELDS */}
                         <AnimatePresence mode="wait" initial={false}>
                           {!isCoach ? (
                             <motion.div
-                              key="player-fields"
+                              key={`player-fields-${attendanceStatus}`}
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -6 }}
                               transition={{ duration: 0.16 }}
                               className="space-y-3 rounded-2xl border border-red-100 bg-red-50/35 p-3.5"
                             >
-                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                              <div
+                                className={cn(
+                                  "grid grid-cols-1 gap-3",
+                                  attendanceStatus === "Attending" &&
+                                    "sm:grid-cols-2"
+                                )}
+                              >
                                 <div className="space-y-1">
                                   <label
                                     htmlFor="dialog-parent-name"
@@ -1351,68 +1362,74 @@ export function ChristmasRsvpExperience({
                                   />
                                 </div>
 
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor="dialog-contact-player"
-                                    className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                  >
-                                    Contact / Viber Number
-                                  </label>
-                                  <input
-                                    id="dialog-contact-player"
-                                    type="tel"
-                                    value={contactNumber}
-                                    onChange={(e) =>
-                                      setContactNumber(e.target.value)
-                                    }
-                                    placeholder="0917 XXX XXXX"
-                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                  />
-                                </div>
+                                {attendanceStatus === "Attending" && (
+                                  <div className="space-y-1">
+                                    <label
+                                      htmlFor="dialog-contact-player"
+                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
+                                    >
+                                      Contact / Viber Number
+                                    </label>
+                                    <input
+                                      id="dialog-contact-player"
+                                      type="tel"
+                                      value={contactNumber}
+                                      onChange={(e) =>
+                                        setContactNumber(e.target.value)
+                                      }
+                                      placeholder="0917 XXX XXXX"
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                    />
+                                  </div>
+                                )}
                               </div>
 
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="dialog-companions"
-                                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                >
-                                  Companion Names{" "}
-                                  {companionCount > 0
-                                    ? `(${companionCount} guest${companionCount > 1 ? "s" : ""})`
-                                    : "(Optional)"}
-                                </label>
-                                <input
-                                  id="dialog-companions"
-                                  type="text"
-                                  value={companionNames}
-                                  onChange={(e) =>
-                                    setCompanionNames(e.target.value)
-                                  }
-                                  placeholder="Names of accompanying family members..."
-                                  className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                />
-                              </div>
+                              {attendanceStatus === "Attending" && (
+                                <>
+                                  <div className="space-y-1">
+                                    <label
+                                      htmlFor="dialog-companions"
+                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
+                                    >
+                                      Companion Names{" "}
+                                      {companionCount > 0
+                                        ? `(${companionCount} guest${companionCount > 1 ? "s" : ""})`
+                                        : "(Optional)"}
+                                    </label>
+                                    <input
+                                      id="dialog-companions"
+                                      type="text"
+                                      value={companionNames}
+                                      onChange={(e) =>
+                                        setCompanionNames(e.target.value)
+                                      }
+                                      placeholder="Names of accompanying family members..."
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                    />
+                                  </div>
 
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="dialog-potluck"
-                                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                >
-                                  Holiday Potluck / Notes (Optional)
-                                </label>
-                                <input
-                                  id="dialog-potluck"
-                                  type="text"
-                                  value={potluckNotes}
-                                  onChange={(e) =>
-                                    setPotluckNotes(e.target.value)
-                                  }
-                                  placeholder="e.g. Bringing Christmas Ham / Pasta / Drinks..."
-                                  className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                />
-                              </div>
+                                  <div className="space-y-1">
+                                    <label
+                                      htmlFor="dialog-potluck"
+                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
+                                    >
+                                      Holiday Potluck / Notes (Optional)
+                                    </label>
+                                    <input
+                                      id="dialog-potluck"
+                                      type="text"
+                                      value={potluckNotes}
+                                      onChange={(e) =>
+                                        setPotluckNotes(e.target.value)
+                                      }
+                                      placeholder="e.g. Bringing Christmas Ham / Pasta / Drinks..."
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                    />
+                                  </div>
+                                </>
+                              )}
                             </motion.div>
-                          ) : (
+                          ) : attendanceStatus === "Attending" ? (
                             <motion.div
                               key="coach-fields"
                               initial={{ opacity: 0, y: 6 }}
@@ -1443,7 +1460,7 @@ export function ChristmasRsvpExperience({
                                 className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                               />
                             </motion.div>
-                          )}
+                          ) : null}
                         </AnimatePresence>
 
                         {formError && (

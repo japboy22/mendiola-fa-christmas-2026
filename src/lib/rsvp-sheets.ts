@@ -180,16 +180,17 @@ export function parseCsv(rawText: string): string[][] {
 
 export function rsvpToSheetRow(record: ChristmasRsvpRecord): string[] {
   const isCoach = record.roleOrAgeGroup === "Coach";
+  const isAttending = record.attendanceStatus === "Attending";
   return [
     record.timestamp,
     record.roleOrAgeGroup,
     record.playerName,
     record.attendanceStatus,
-    String(record.attendanceStatus === "Attending" ? record.totalPax : 0),
+    String(isAttending ? record.totalPax : 0),
     isCoach ? "" : record.parentName,
-    isCoach ? "" : record.companionNames,
-    record.contactNumber,
-    isCoach ? "" : record.potluckNotes,
+    isCoach || !isAttending ? "" : record.companionNames,
+    !isAttending ? "" : record.contactNumber,
+    isCoach || !isAttending ? "" : record.potluckNotes,
   ];
 }
 
@@ -487,10 +488,10 @@ export async function saveRsvpRecord(
 
   const isCoach = input.roleOrAgeGroup === "Coach";
   const attendanceStatus = input.attendanceStatus;
-  const totalPax =
-    attendanceStatus === "Attending"
-      ? Math.max(1, Math.min(30, Math.round(Number(input.totalPax) || 1)))
-      : 0;
+  const isAttending = attendanceStatus === "Attending";
+  const totalPax = isAttending
+    ? Math.max(1, Math.min(30, Math.round(Number(input.totalPax) || 1)))
+    : 0;
 
   const nowFormatted = new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
@@ -510,11 +511,13 @@ export async function saveRsvpRecord(
     playerName: input.playerName.trim(),
     attendanceStatus,
     totalPax,
-    // Enforce Coach rule: no parent/guardian name, companion names, or potluck notes
+    // Enforce Coach & Not Attending rules
     parentName: isCoach ? "" : (input.parentName ?? "").trim(),
-    companionNames: isCoach ? "" : (input.companionNames ?? "").trim(),
-    contactNumber: (input.contactNumber ?? "").trim(),
-    potluckNotes: isCoach ? "" : (input.potluckNotes ?? "").trim(),
+    companionNames:
+      isCoach || !isAttending ? "" : (input.companionNames ?? "").trim(),
+    contactNumber: !isAttending ? "" : (input.contactNumber ?? "").trim(),
+    potluckNotes:
+      isCoach || !isAttending ? "" : (input.potluckNotes ?? "").trim(),
     syncedToSheet: false,
   };
 
