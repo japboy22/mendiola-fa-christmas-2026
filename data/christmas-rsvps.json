@@ -1,0 +1,18 @@
+{
+  "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxtTwLXtfwn01JZOdayy5aN_bCYwi_NhbYhrFmCK9T0DTRWcZARylrCQ5D4psm0-VUP/exec",
+  "records": [
+    {
+      "id": "rsvp-1794322956564-jbqle",
+      "timestamp": "11/10/2026, 23:02:36",
+      "roleOrAgeGroup": "Coach",
+      "playerName": "Emman",
+      "attendanceStatus": "Attending",
+      "totalPax": 3,
+      "parentName": "",
+      "companionNames": "",
+      "contactNumber": "09123123123123",
+      "potluckNotes": "",
+      "syncedToSheet": true
+    }
+  ]
+}
