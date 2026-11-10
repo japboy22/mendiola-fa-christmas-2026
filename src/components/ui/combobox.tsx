@@ -112,7 +112,7 @@ export function Combobox({
                 <Search className="mr-2 h-4 w-4 shrink-0 text-zinc-400" />
                 <CommandPrimitive.Input
                   placeholder={searchPlaceholder}
-                  className="flex h-11 w-full bg-transparent py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-11 w-full bg-transparent py-3 text-base sm:text-sm text-zinc-900 outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             )}

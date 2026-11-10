@@ -685,7 +685,7 @@ export function ChristmasRsvpExperience({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search player, coach, parent, or potluck..."
-                    className="h-11 w-full rounded-xl border border-red-200 bg-white pl-9 pr-9 text-sm text-zinc-900 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="h-11 w-full rounded-xl border border-red-200 bg-white pl-9 pr-9 text-base sm:text-sm text-zinc-900 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   {searchQuery && (
                     <button
@@ -1238,7 +1238,7 @@ export function ChristmasRsvpExperience({
                                 ? "Enter Coach's full name"
                                 : "Enter Player's full name"
                             }
-                            className="h-11 w-full rounded-xl border border-red-200 bg-white px-3.5 text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="h-11 w-full rounded-xl border border-red-200 bg-white px-3.5 text-base sm:text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </div>
 
@@ -1401,7 +1401,7 @@ export function ChristmasRsvpExperience({
                                       if (formError) setFormError(null);
                                     }}
                                     placeholder="e.g. Angelie Mauricio"
-                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                                   />
                                 </div>
 
@@ -1421,7 +1421,7 @@ export function ChristmasRsvpExperience({
                                         setContactNumber(e.target.value)
                                       }
                                       placeholder="0917 XXX XXXX"
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                                     />
                                   </div>
                                 )}
@@ -1447,7 +1447,7 @@ export function ChristmasRsvpExperience({
                                         setCompanionNames(e.target.value)
                                       }
                                       placeholder="Names of accompanying family members..."
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                                     />
                                   </div>
 
@@ -1466,7 +1466,7 @@ export function ChristmasRsvpExperience({
                                         setPotluckNotes(e.target.value)
                                       }
                                       placeholder="e.g. Bringing Christmas Ham / Pasta / Drinks..."
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                                     />
                                   </div>
                                 </>
@@ -1500,7 +1500,7 @@ export function ChristmasRsvpExperience({
                                   setContactNumber(e.target.value)
                                 }
                                 placeholder="0917 XXX XXXX"
-                                className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
                               />
                             </motion.div>
                           ) : null}
