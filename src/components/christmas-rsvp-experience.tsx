@@ -9,8 +9,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  ExternalLink,
-  FileSpreadsheet,
   MapPin,
   Minus,
   Navigation,
@@ -29,7 +27,6 @@ import {
   X,
 } from "lucide-react";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
-import { SheetSyncModal } from "@/components/sheet-sync-modal";
 import { ACADEMY_ROSTER_PLAYERS } from "@/data/roster-players";
 import {
   EVENT_DETAILS,
@@ -44,8 +41,6 @@ import { cn } from "@/lib/utils";
 interface ChristmasRsvpExperienceProps {
   initialRecords: ChristmasRsvpRecord[];
   initialStats: RsvpSummaryStats;
-  initialSyncMode: "apps-script" | "service-account" | "csv-live";
-  initialHasAppsScriptUrl: boolean;
 }
 
 const LOCAL_CACHE_KEY = "mfc_bulacan_christmas_2026_rsvps_v1";
@@ -106,8 +101,6 @@ function downloadCalendarIcs() {
 export function ChristmasRsvpExperience({
   initialRecords,
   initialStats,
-  initialSyncMode,
-  initialHasAppsScriptUrl,
 }: ChristmasRsvpExperienceProps) {
   const [activeTab, setActiveTab] = React.useState<"pass" | "roster">("pass");
   const [isRsvpDialogOpen, setIsRsvpDialogOpen] = React.useState(false);
@@ -115,10 +108,6 @@ export function ChristmasRsvpExperience({
   const [records, setRecords] =
     React.useState<ChristmasRsvpRecord[]>(initialRecords);
   const [stats, setStats] = React.useState<RsvpSummaryStats>(initialStats);
-  const [syncMode, setSyncMode] = React.useState(initialSyncMode);
-  const [hasAppsScriptUrl, setHasAppsScriptUrl] = React.useState(
-    initialHasAppsScriptUrl
-  );
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Form state inside the RSVP Dialog Box
@@ -222,16 +211,10 @@ export function ChristmasRsvpExperience({
           ok: boolean;
           records?: ChristmasRsvpRecord[];
           stats?: RsvpSummaryStats;
-          syncMode?: "apps-script" | "service-account" | "csv-live";
-          hasAppsScriptUrl?: boolean;
         };
         if (data.ok && data.records && data.stats) {
           setRecords(data.records);
           setStats(data.stats);
-          if (data.syncMode) setSyncMode(data.syncMode);
-          if (typeof data.hasAppsScriptUrl === "boolean") {
-            setHasAppsScriptUrl(data.hasAppsScriptUrl);
-          }
         }
       }
     } catch {
@@ -267,14 +250,6 @@ export function ChristmasRsvpExperience({
 
     setIsSubmitting(true);
 
-    let savedAppsScriptUrl = "";
-    try {
-      savedAppsScriptUrl =
-        localStorage.getItem("mfc_xmas_apps_script_url") || "";
-    } catch {
-      // Ignore
-    }
-
     try {
       const res = await fetch("/api/rsvp", {
         method: "POST",
@@ -288,7 +263,6 @@ export function ChristmasRsvpExperience({
           companionNames: isCoach ? "" : companionNames.trim(),
           contactNumber: contactNumber.trim(),
           potluckNotes: isCoach ? "" : potluckNotes.trim(),
-          appsScriptUrl: savedAppsScriptUrl,
         }),
       });
 
@@ -298,8 +272,6 @@ export function ChristmasRsvpExperience({
         record?: ChristmasRsvpRecord;
         records?: ChristmasRsvpRecord[];
         stats?: RsvpSummaryStats;
-        syncMode?: "apps-script" | "service-account" | "csv-live";
-        hasAppsScriptUrl?: boolean;
       };
 
       if (!res.ok || !data.ok || !data.record) {
@@ -312,10 +284,6 @@ export function ChristmasRsvpExperience({
 
       if (data.records) setRecords(data.records);
       if (data.stats) setStats(data.stats);
-      if (data.syncMode) setSyncMode(data.syncMode);
-      if (typeof data.hasAppsScriptUrl === "boolean") {
-        setHasAppsScriptUrl(data.hasAppsScriptUrl);
-      }
 
       try {
         const raw = localStorage.getItem(LOCAL_CACHE_KEY);
@@ -343,34 +311,6 @@ export function ChristmasRsvpExperience({
         "Network error while submitting RSVP. Please check your connection and try again."
       );
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveAppsScriptUrl = async (url: string) => {
-    const res = await fetch("/api/rsvp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "configureAppsScript",
-        appsScriptUrl: url,
-      }),
-    });
-    const data = (await res.json()) as {
-      ok: boolean;
-      message?: string;
-      records?: ChristmasRsvpRecord[];
-      stats?: RsvpSummaryStats;
-      syncMode?: "apps-script" | "service-account" | "csv-live";
-      hasAppsScriptUrl?: boolean;
-    };
-    if (data.records) setRecords(data.records);
-    if (data.stats) setStats(data.stats);
-    if (data.syncMode) setSyncMode(data.syncMode);
-    if (typeof data.hasAppsScriptUrl === "boolean") {
-      setHasAppsScriptUrl(data.hasAppsScriptUrl);
-    }
-    if (!data.ok) {
-      throw new Error(data.message || "Failed to connect Apps Script URL.");
     }
   };
 
@@ -408,11 +348,6 @@ export function ChristmasRsvpExperience({
       return true;
     });
   }, [records, groupFilter, statusFilter, searchQuery]);
-
-  const unsyncedCount = React.useMemo(
-    () => records.filter((r) => r.syncedToSheet === false).length,
-    [records]
-  );
 
   const companionCount =
     !isCoach && attendanceStatus === "Attending"
@@ -459,17 +394,10 @@ export function ChristmasRsvpExperience({
           </button>
 
           <div className="flex shrink-0 items-center gap-2">
-            <SheetSyncModal
-              syncMode={syncMode}
-              hasAppsScriptUrl={hasAppsScriptUrl}
-              unsyncedCount={unsyncedCount}
-              onAppsScriptSaved={handleSaveAppsScriptUrl}
-            />
-
             <button
               type="button"
               onClick={() => openRsvpForGroup()}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-extrabold text-white shadow-xs transition hover:bg-red-700 active:scale-[0.98] cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-extrabold text-white shadow-xs transition hover:bg-red-700 active:scale-[0.98] cursor-pointer"
             >
               <Ticket className="h-3.5 w-3.5" />
               <span>Confirm Attendance</span>
@@ -765,7 +693,7 @@ export function ChristmasRsvpExperience({
                     Latest Confirmed RSVPs
                   </h2>
                   <p className="text-xs text-zinc-500">
-                    Synced with Mendiola Christmas Party 2026 Google Sheet
+                    Live confirmed players &amp; coaching staff
                   </p>
                 </div>
                 <button
@@ -936,7 +864,7 @@ export function ChristmasRsvpExperience({
                     type="button"
                     onClick={refreshRsvps}
                     disabled={isRefreshing}
-                    className="inline-flex h-11 flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-xs font-bold text-zinc-800 transition hover:border-primary/40 cursor-pointer"
+                    className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-xs font-bold text-zinc-800 transition hover:border-primary/40 cursor-pointer"
                   >
                     <RefreshCw
                       className={cn(
@@ -944,19 +872,8 @@ export function ChristmasRsvpExperience({
                         isRefreshing && "animate-spin"
                       )}
                     />
-                    <span>Refresh</span>
+                    <span>Refresh List</span>
                   </button>
-
-                  <a
-                    href={EVENT_DETAILS.spreadsheetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-11 flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-xl bg-zinc-950 px-3.5 text-xs font-bold text-white transition hover:bg-zinc-800"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                    <span>Sheet</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
                 </div>
               </div>
             </div>
@@ -1717,7 +1634,7 @@ export function ChristmasRsvpExperience({
                           <Ticket className="h-4 w-4" />
                           <span>
                             {isSubmitting
-                              ? "Saving RSVP to Google Sheet..."
+                              ? "Saving RSVP Confirmation..."
                               : attendanceStatus === "Attending"
                                 ? `Submit Confirmation (${totalPax} Pax)`
                                 : "Submit RSVP Response"}
