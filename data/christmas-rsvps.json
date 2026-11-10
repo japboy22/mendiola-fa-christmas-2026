@@ -1,4 +1,18 @@
 {
   "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxtTwLXtfwn01JZOdayy5aN_bCYwi_NhbYhrFmCK9T0DTRWcZARylrCQ5D4psm0-VUP/exec",
-  "records": []
+  "records": [
+    {
+      "id": "rsvp-1794325803782-8ofhj",
+      "timestamp": "11/10/2026, 23:50:03",
+      "roleOrAgeGroup": "U9",
+      "playerName": "Gideon",
+      "attendanceStatus": "Attending",
+      "totalPax": 4,
+      "parentName": "Alo Acal",
+      "companionNames": "Gavin, Japboy, Alo",
+      "contactNumber": "09190625046",
+      "potluckNotes": "Bake",
+      "syncedToSheet": true
+    }
+  ]
 }

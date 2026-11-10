@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8f8;
-  --foreground: #09090b;
+  --background: #fcf6f5;
+  --foreground: #18090b;
   --card: #ffffff;
-  --card-foreground: #09090b;
+  --card-foreground: #18090b;
   --popover: #ffffff;
-  --popover-foreground: #09090b;
+  --popover-foreground: #18090b;
   --primary: #d91b23;
   --primary-foreground: #ffffff;
-  --muted: #f4f4f5;
-  --muted-foreground: #52525b;
+  --muted: #f9f1f0;
+  --muted-foreground: #644b4e;
   --accent: #fef2f2;
-  --accent-foreground: #09090b;
-  --border: #e4e4e7;
-  --input: #d4d4d8;
+  --accent-foreground: #18090b;
+  --border: #f1dada;
+  --input: #e5c7c7;
   --ring: #d91b23;
 }
 
@@ -47,6 +47,41 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
+}
+
+/* Subtle Christmas Snowfall Keyframes */
+@keyframes mfcSnowfall {
+  0% {
+    transform: translate3d(0, -5vh, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--snow-drift, 16px), 50vh, 0) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(0, 108vh, 0) rotate(360deg);
+  }
+}
+
+.mfc-snowflake {
+  will-change: transform;
+  animation-name: mfcSnowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Candy-cane festive stripe utility */
+.mfc-candy-cane-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #d91b23,
+    #d91b23 12px,
+    #ffffff 12px,
+    #ffffff 24px,
+    #15803d 24px,
+    #15803d 28px,
+    #ffffff 28px,
+    #ffffff 36px
+  );
 }
 
 /* Smooth Radix popover & dialog motion */
