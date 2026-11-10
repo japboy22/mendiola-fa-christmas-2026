@@ -26,8 +26,7 @@ import {
   Utensils,
   X,
 } from "lucide-react";
-import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
-import { ACADEMY_ROSTER_PLAYERS } from "@/data/roster-players";
+import { Combobox } from "@/components/ui/combobox";
 import {
   EVENT_DETAILS,
   ROLE_OR_AGE_GROUP_OPTIONS,
@@ -113,9 +112,6 @@ export function ChristmasRsvpExperience({
   // Form state inside the RSVP Dialog Box
   const [roleOrAgeGroup, setRoleOrAgeGroup] =
     React.useState<RoleOrAgeGroup>("U5");
-  const [selectedRosterKey, setSelectedRosterKey] = React.useState<
-    string | null
-  >(null);
   const [playerName, setPlayerName] = React.useState("");
   const [attendanceStatus, setAttendanceStatus] =
     React.useState<AttendanceStatus>("Attending");
@@ -142,7 +138,6 @@ export function ChristmasRsvpExperience({
     setRoleOrAgeGroup(nextRole);
     setFormError(null);
     if (nextRole === "Coach") {
-      setSelectedRosterKey(null);
       setParentName("");
       setCompanionNames("");
       setPotluckNotes("");
@@ -163,43 +158,6 @@ export function ChristmasRsvpExperience({
     setSubmittedRecord(null);
     setFormError(null);
     setIsRsvpDialogOpen(true);
-  };
-
-  const rosterComboboxOptions = React.useMemo<ComboboxOption[]>(() => {
-    if (isCoach) return [];
-    const divisionMatches = ACADEMY_ROSTER_PLAYERS.filter(
-      (p) => p.division === roleOrAgeGroup
-    );
-    const others = ACADEMY_ROSTER_PLAYERS.filter(
-      (p) => p.division !== roleOrAgeGroup
-    );
-    return [...divisionMatches, ...others].map((p) => ({
-      value: p.fullName,
-      label: p.fullName,
-      sublabel: p.parentName
-        ? `Nickname: ${p.nickname} · Parent: ${p.parentName}`
-        : `Nickname: ${p.nickname}`,
-      badge: p.division,
-    }));
-  }, [isCoach, roleOrAgeGroup]);
-
-  const handleQuickPickPlayer = (fullNameValue: string | null) => {
-    setSelectedRosterKey(fullNameValue);
-    if (!fullNameValue) return;
-    const found = ACADEMY_ROSTER_PLAYERS.find(
-      (p) => p.fullName === fullNameValue
-    );
-    if (!found) return;
-
-    setPlayerName(found.fullName);
-    setRoleOrAgeGroup(found.division);
-    if (found.parentName && !parentName) {
-      setParentName(found.parentName);
-    }
-    if (found.contactNumber && !contactNumber) {
-      setContactNumber(found.contactNumber);
-    }
-    setFormError(null);
   };
 
   const refreshRsvps = React.useCallback(async () => {
@@ -316,7 +274,6 @@ export function ChristmasRsvpExperience({
 
   const handleResetForAnotherPlayer = () => {
     setSubmittedRecord(null);
-    setSelectedRosterKey(null);
     setPlayerName("");
     setAttendanceStatus("Attending");
     setTotalPax(isCoach ? 1 : 2);
@@ -1329,17 +1286,6 @@ export function ChristmasRsvpExperience({
                               </span>
                             )}
                           </div>
-
-                          {!isCoach && (
-                            <Combobox
-                              value={selectedRosterKey}
-                              placeholder={`Quick-select ${roleOrAgeGroup} player from roster (optional)...`}
-                              shortPlaceholder="Quick-select from roster (optional)..."
-                              searchPlaceholder="Type player name or nickname..."
-                              options={rosterComboboxOptions}
-                              onChange={handleQuickPickPlayer}
-                            />
-                          )}
 
                           <input
                             id="dialog-player-name"
