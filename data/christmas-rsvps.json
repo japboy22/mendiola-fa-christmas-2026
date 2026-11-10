@@ -2,19 +2,6 @@
   "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxtTwLXtfwn01JZOdayy5aN_bCYwi_NhbYhrFmCK9T0DTRWcZARylrCQ5D4psm0-VUP/exec",
   "records": [
     {
-      "id": "rsvp-1794328804319-55mrv",
-      "timestamp": "11/11/2026, 00:40:04",
-      "roleOrAgeGroup": "U7",
-      "playerName": "Inigo",
-      "attendanceStatus": "Not Attending",
-      "totalPax": 0,
-      "parentName": "Catherine",
-      "companionNames": "",
-      "contactNumber": "",
-      "potluckNotes": "",
-      "syncedToSheet": true
-    },
-    {
       "id": "rsvp-1794325803782-8ofhj",
       "timestamp": "11/10/2026, 23:50:03",
       "roleOrAgeGroup": "U9",
