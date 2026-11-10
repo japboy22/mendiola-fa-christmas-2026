@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f8;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #d91b23;
+  --primary-foreground: #ffffff;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --accent: #fef2f2;
+  --accent-foreground: #09090b;
+  --border: #e4e4e7;
+  --input: #d4d4d8;
+  --ring: #d91b23;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-outfit);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
+}
+
+/* Smooth Radix popover & dialog motion */
+@keyframes mfcOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mfcOverlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mfcDialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mfcDialogOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+@keyframes mfcPopoverInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mfcPopoverOutBottom {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+.mfc-dialog-overlay[data-state="open"] {
+  animation: mfcOverlayIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mfc-dialog-overlay[data-state="closed"] {
+  animation: mfcOverlayOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+.mfc-dialog-content {
+  will-change: transform, opacity;
+}
+
+.mfc-dialog-content[data-state="open"] {
+  animation: mfcDialogIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mfc-dialog-content[data-state="closed"] {
+  animation: mfcDialogOut 170ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+.mfc-popover-content {
+  transform-origin: var(--radix-popover-content-transform-origin);
+  will-change: transform, opacity;
+}
+
+.mfc-popover-content[data-state="open"] {
+  animation: mfcPopoverInBottom 190ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mfc-popover-content[data-state="closed"] {
+  animation: mfcPopoverOutBottom 145ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
