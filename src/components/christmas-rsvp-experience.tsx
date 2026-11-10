@@ -5,26 +5,16 @@ import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Bell,
   Calendar,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
   Gift,
   MapPin,
   Minus,
-  Navigation,
-  PartyPopper,
-  Phone,
   Plus,
   RefreshCw,
   Search,
-  Snowflake,
   Sparkles,
-  Star,
   TreePine,
   Users,
-  Utensils,
   X,
 } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
@@ -321,7 +311,7 @@ export function ChristmasRsvpExperience({
       {/* Festive Candy-Cane Top Ribbon */}
       <div className="mfc-candy-cane-bar relative z-30 h-2 w-full shadow-2xs" />
 
-      {/* Christmas-Themed Sticky Header */}
+      {/* Clean Christmas Sticky Header */}
       <header className="sticky top-0 z-30 h-16 border-b border-red-200/70 bg-white/90 backdrop-blur-md shadow-[0_4px_20px_rgba(217,27,35,0.05)]">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-2 px-3.5 sm:px-6">
           <button
@@ -329,7 +319,7 @@ export function ChristmasRsvpExperience({
             onClick={() => setActiveTab("pass")}
             className="flex min-w-0 items-center gap-2.5 text-left group cursor-pointer"
           >
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-red-200 bg-gradient-to-br from-white to-red-50/60 p-1 shadow-xs transition-transform duration-200 group-hover:scale-105">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white p-1 shadow-2xs transition-transform duration-200 group-hover:scale-105">
               <Image
                 src="/mendiola-logo.png"
                 alt="Mendiola Football Academy - Bulacan Logo"
@@ -339,43 +329,33 @@ export function ChristmasRsvpExperience({
                 className="h-8 object-contain"
                 priority
               />
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-2xs ring-2 ring-white">
-                <Star className="h-2.5 w-2.5 fill-amber-950" />
-              </span>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-sm font-extrabold tracking-tight text-zinc-950 sm:text-base">
                   Mendiola FA Bulacan
                 </span>
-                <span className="hidden items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 font-mono text-[10px] font-extrabold text-primary sm:inline-flex">
-                  <TreePine className="h-3 w-3 text-emerald-700" />
-                  <span>XMAS 2026</span>
+                <span className="hidden rounded-full bg-red-50 border border-red-200 px-2 py-0.5 font-mono text-[10px] font-extrabold text-primary sm:inline-block">
+                  XMAS 2026
                 </span>
               </div>
-              <p className="flex items-center gap-1 truncate text-[11px] font-medium text-zinc-600">
-                <Snowflake className="h-3 w-3 shrink-0 text-primary" />
-                <span className="truncate">
-                  Dec 15, 2026 · 3:00 PM · Valle Maria Mar
-                </span>
+              <p className="truncate text-[11px] font-medium text-zinc-600">
+                Dec 15, 2026 · 3:00 PM · Valle Maria Mar
               </p>
             </div>
           </button>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => openRsvpForGroup()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D91B23] to-[#B5121B] px-3.5 py-2 text-xs font-extrabold text-white shadow-sm shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-            >
-              <Gift className="h-3.5 w-3.5 text-amber-200" />
-              <span>RSVP Now</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => openRsvpForGroup()}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D91B23] to-[#B5121B] px-3.5 py-2 text-xs font-extrabold text-white shadow-sm shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+          >
+            <span>RSVP Now</span>
+          </button>
         </div>
       </header>
 
-      {/* Main Content Area (Festive Mobile-First Layout) */}
+      {/* Main Content Area */}
       <main className="relative z-20 mx-auto w-full max-w-6xl flex-1 px-3.5 py-4 sm:px-6 sm:py-8">
         {activeTab === "pass" ? (
           <div className="space-y-5 sm:space-y-7">
@@ -383,41 +363,18 @@ export function ChristmasRsvpExperience({
             <section className="overflow-hidden rounded-3xl border-2 border-red-200/90 bg-white/95 shadow-[0_18px_50px_rgba(185,20,28,0.10)] backdrop-blur-xs">
               {/* Crimson & Gold Christmas Banner */}
               <div className="relative overflow-hidden bg-gradient-to-br from-[#A50D16] via-[#D91B23] to-[#7C0910] px-4 py-6 text-white sm:px-8 sm:py-9">
-                {/* Decorative Hanging Christmas Ornaments & Snowflakes */}
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 overflow-hidden"
                 >
-                  {/* Soft gold radial glow */}
                   <div className="absolute -top-16 right-8 h-56 w-56 rounded-full bg-amber-400/15 blur-3xl" />
                   <div className="absolute -bottom-16 left-10 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-
-                  {/* Hanging Ornament Left */}
-                  <div className="hidden sm:flex flex-col items-center absolute top-0 right-64 opacity-35">
-                    <div className="h-8 w-px bg-amber-200" />
-                    <div className="h-6 w-6 rounded-full border-2 border-amber-200 bg-red-500/40 flex items-center justify-center">
-                      <Star className="h-3 w-3 text-amber-200 fill-amber-200" />
-                    </div>
-                  </div>
-
-                  {/* Hanging Ornament Right */}
-                  <div className="hidden sm:flex flex-col items-center absolute top-0 right-14 opacity-40">
-                    <div className="h-12 w-px bg-amber-200" />
-                    <div className="h-8 w-8 rounded-full border-2 border-amber-200 bg-amber-400/25 flex items-center justify-center">
-                      <Snowflake className="h-4 w-4 text-white" />
-                    </div>
-                  </div>
-
-                  {/* Corner Snowflakes */}
-                  <Snowflake className="absolute -right-6 -top-6 h-28 w-28 text-white/10 rotate-12" />
-                  <Snowflake className="absolute right-24 bottom-2 h-14 w-14 text-white/10 -rotate-12" />
-                  <TreePine className="absolute -left-6 -bottom-6 h-32 w-32 text-black/10" />
                 </div>
 
                 <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                  {/* Crest Framed as a Holiday Wreath + Title */}
+                  {/* Official Crest + Title */}
                   <div className="flex items-center gap-3.5 sm:gap-5">
-                    <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-3xl border-2 border-amber-300/90 bg-white p-2 shadow-2xl ring-4 ring-white/15">
+                    <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-3xl border-2 border-amber-300/90 bg-white p-2 shadow-2xl ring-4 ring-white/15">
                       <Image
                         src="/mendiola-logo.png"
                         alt="Mendiola Football Club 1991 Official Crest"
@@ -427,37 +384,28 @@ export function ChristmasRsvpExperience({
                         className="h-15 sm:h-19 object-contain"
                         priority
                       />
-                      {/* Festive Holly / Pine Corner Badge */}
-                      <span className="absolute -bottom-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-emerald-700 text-white shadow-md">
-                        <TreePine className="h-3.5 w-3.5 text-amber-200" />
-                      </span>
                     </div>
 
                     <div className="min-w-0">
-                      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-amber-300/40 bg-black/20 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-xs">
-                        <Sparkles className="h-3 w-3 text-amber-300" />
-                        <span>Season&apos;s Greetings · Est. 1991</span>
+                      <div className="inline-flex items-center rounded-full border border-amber-300/40 bg-black/20 px-3 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-xs">
+                        Season&apos;s Greetings · Est. 1991
                       </div>
 
-                      <h1 className="mt-1.5 text-xl font-extrabold tracking-tight text-white sm:text-3xl leading-tight drop-shadow-xs">
+                      <h1 className="mt-1.5 text-xl font-extrabold tracking-tight text-white sm:text-3xl leading-tight">
                         Mendiola Football Academy - Bulacan
                       </h1>
 
-                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-red-100 sm:text-sm">
-                        <Gift className="h-4 w-4 text-amber-300 shrink-0" />
-                        <span>
-                          Christmas Party 2026 · Attendance Confirmation
-                        </span>
+                      <p className="mt-1 text-xs font-semibold text-red-100 sm:text-sm">
+                        Christmas Party 2026 · Attendance Confirmation
                       </p>
                     </div>
                   </div>
 
                   {/* Holiday Countdown + Primary RSVP Action */}
                   <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-                    <div className="rounded-2xl border border-amber-200/30 bg-black/25 px-3.5 py-2.5 backdrop-blur-xs sm:min-w-[245px]">
-                      <div className="mb-1.5 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-amber-200">
-                        <Bell className="h-3 w-3 text-amber-300" />
-                        <span>Christmas Party Countdown</span>
+                    <div className="rounded-2xl border border-amber-200/30 bg-black/25 px-3.5 py-2.5 backdrop-blur-xs sm:min-w-[240px]">
+                      <div className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-amber-200">
+                        Christmas Party Countdown
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div className="rounded-xl bg-white/10 py-1 text-center">
@@ -494,7 +442,6 @@ export function ChristmasRsvpExperience({
                     >
                       <Gift className="h-4 w-4 text-primary" />
                       <span>Confirm Attendance Now</span>
-                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -503,44 +450,40 @@ export function ChristmasRsvpExperience({
               {/* Festive Garland Divider */}
               <div className="h-1.5 w-full bg-gradient-to-r from-emerald-700 via-amber-400 to-primary" />
 
-              {/* Event Key Info Grid (Christmas Icons & Warm Festive Cards) */}
+              {/* Event Key Info Grid (One Clean Icon per Section) */}
               <div className="grid grid-cols-1 divide-y divide-red-100/80 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                 {/* 1. Date & Time */}
                 <div className="flex items-start justify-between gap-3 p-4 sm:p-5 bg-gradient-to-b from-white to-red-50/20">
                   <div className="flex items-start gap-3">
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-primary shadow-2xs">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-primary">
                       <Calendar className="h-5 w-5" />
-                      <Bell className="absolute -right-1 -top-1 h-3.5 w-3.5 text-amber-500 fill-amber-400" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-                        <span>Holiday Celebration Date</span>
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                        Celebration Date &amp; Time
                       </div>
                       <div className="mt-0.5 text-sm font-extrabold text-zinc-950 sm:text-base">
                         December 15, 2026
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1 text-xs font-bold text-primary">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>Tuesday · 3:00 PM</span>
+                      <div className="mt-0.5 text-xs font-bold text-primary">
+                        Tuesday · 3:00 PM
                       </div>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={downloadCalendarIcs}
-                    className="shrink-0 inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50/60 px-2.5 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
+                    className="shrink-0 rounded-xl border border-red-200 bg-red-50/60 px-2.5 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
                   >
-                    <Calendar className="h-3 w-3" />
-                    <span>+ Save Date</span>
+                    + Save Date
                   </button>
                 </div>
 
                 {/* 2. Venue & Map Directions */}
                 <div className="p-4 sm:p-5 space-y-3 bg-gradient-to-b from-white to-red-50/20">
                   <div className="flex items-start gap-3">
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-2xs">
-                      <TreePine className="h-5 w-5" />
-                      <MapPin className="absolute -right-1 -top-1 h-3.5 w-3.5 text-primary fill-red-100" />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800">
+                      <MapPin className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
@@ -560,19 +503,17 @@ export function ChristmasRsvpExperience({
                       href={EVENT_DETAILS.googleMapsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
+                      className="inline-flex items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
                     >
-                      <MapPin className="h-3.5 w-3.5 text-primary" />
-                      <span>Google Maps</span>
+                      Open Google Maps
                     </a>
                     <a
                       href={EVENT_DETAILS.wazeUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
+                      className="inline-flex items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
                     >
-                      <Navigation className="h-3.5 w-3.5 text-primary" />
-                      <span>Waze</span>
+                      Navigate via Waze
                     </a>
                   </div>
                 </div>
@@ -580,9 +521,8 @@ export function ChristmasRsvpExperience({
                 {/* 3. Red & White Christmas Motif */}
                 <div className="flex items-center justify-between gap-3 p-4 sm:p-5 bg-gradient-to-br from-red-50/70 via-white to-amber-50/40">
                   <div className="flex items-start gap-3">
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D91B23] to-[#9E0B14] text-white shadow-sm">
-                      <Gift className="h-5 w-5 text-amber-200" />
-                      <Snowflake className="absolute -right-1 -top-1 h-3.5 w-3.5 text-primary rounded-full bg-white p-0.5 shadow-2xs" />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D91B23] to-[#9E0B14] text-amber-200 shadow-2xs">
+                      <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
                       <div className="text-[11px] font-bold uppercase tracking-wider text-primary">
@@ -592,23 +532,19 @@ export function ChristmasRsvpExperience({
                         Red and White Motif
                       </div>
                       <div className="text-xs font-medium text-zinc-600">
-                        Festive Christmas Red &amp; Snow White!
+                        Festive Christmas Red &amp; Snow White
                       </div>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center -space-x-2">
                     <span
                       title="Christmas Red (#D91B23)"
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D91B23] ring-2 ring-white shadow-sm"
-                    >
-                      <Star className="h-3.5 w-3.5 text-amber-200 fill-amber-200" />
-                    </span>
+                      className="h-8 w-8 rounded-full bg-[#D91B23] ring-2 ring-white shadow-sm"
+                    />
                     <span
                       title="Snow White (#FFFFFF)"
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-white ring-2 ring-red-200 shadow-sm"
-                    >
-                      <Snowflake className="h-3.5 w-3.5 text-primary" />
-                    </span>
+                      className="h-8 w-8 rounded-full bg-white ring-2 ring-red-200 shadow-sm"
+                    />
                   </div>
                 </div>
               </div>
@@ -617,35 +553,26 @@ export function ChristmasRsvpExperience({
             {/* RECENT CONFIRMED HOLIDAY GUESTS PREVIEW */}
             <section className="rounded-3xl border border-red-200/80 bg-white/90 p-4 sm:p-6 shadow-xs backdrop-blur-xs space-y-3.5">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-50 border border-red-200 text-primary">
-                    <PartyPopper className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-extrabold text-zinc-950">
-                      Latest Confirmed Holiday Guests
-                    </h2>
-                    <p className="text-xs text-zinc-500">
-                      Live confirmed players, families &amp; coaching staff
-                    </p>
-                  </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-zinc-950">
+                    Latest Confirmed Holiday Guests
+                  </h2>
+                  <p className="text-xs text-zinc-500">
+                    Live confirmed players, families &amp; coaching staff
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveTab("roster")}
-                  className="inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
+                  className="inline-flex items-center rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
                 >
-                  <span>See All ({records.length})</span>
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  See All ({records.length})
                 </button>
               </div>
 
               {records.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-red-200 bg-gradient-to-b from-red-50/40 to-white p-7 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100/80 text-primary">
-                    <TreePine className="h-6 w-6 text-emerald-700" />
-                  </div>
-                  <p className="mt-2.5 text-sm font-extrabold text-zinc-900">
+                  <p className="text-sm font-extrabold text-zinc-900">
                     Be the First to Confirm for Christmas Party 2026!
                   </p>
                   <p className="mt-1 text-xs font-medium text-zinc-500">
@@ -667,13 +594,12 @@ export function ChristmasRsvpExperience({
                           <div className="flex items-center gap-1.5">
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold",
+                                "rounded-md px-2 py-0.5 font-mono text-[10px] font-bold",
                                 isRecCoach
                                   ? "bg-emerald-800 text-white"
                                   : "bg-primary text-white"
                               )}
                             >
-                              <Snowflake className="h-2.5 w-2.5" />
                               {rec.roleOrAgeGroup}
                             </span>
                             <span className="truncate text-sm font-extrabold text-zinc-950">
@@ -687,8 +613,7 @@ export function ChristmasRsvpExperience({
                           )}
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="inline-flex items-center gap-1 rounded-xl bg-white border border-red-200 px-2.5 py-1 font-mono text-xs font-extrabold text-primary shadow-2xs">
-                            <Gift className="h-3 w-3 text-amber-500" />
+                          <span className="inline-flex items-center rounded-xl bg-white border border-red-200 px-2.5 py-1 font-mono text-xs font-extrabold text-primary shadow-2xs">
                             {rec.totalPax} Pax
                           </span>
                         </div>
@@ -700,15 +625,14 @@ export function ChristmasRsvpExperience({
             </section>
           </div>
         ) : (
-          /* TAB 2: CONFIRMED ATTENDANCE ROSTER & HEADCOUNT (FESTIVE MOBILE CARDS + DESKTOP TABLE) */
+          /* TAB 2: CONFIRMED ATTENDANCE ROSTER & HEADCOUNT */
           <div className="space-y-4 sm:space-y-6">
             {/* Festive Mobile-First Summary Strip */}
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
               <div className="col-span-2 sm:col-span-1 rounded-2xl border border-red-300 bg-gradient-to-br from-[#D91B23] to-[#9E0B14] p-3.5 text-white shadow-sm flex sm:block items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-amber-200">
-                    <PartyPopper className="h-3.5 w-3.5" />
-                    <span>Total Party Pax</span>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-200">
+                    Total Party Pax
                   </div>
                   <div className="text-xs text-red-100">
                     {stats.attendingCount} confirmed entries
@@ -732,12 +656,7 @@ export function ChristmasRsvpExperience({
                       className="rounded-2xl border border-red-100 bg-white/95 p-3.5 shadow-2xs"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase text-zinc-700">
-                          {grp === "Coach" ? (
-                            <TreePine className="h-3.5 w-3.5 text-emerald-700" />
-                          ) : (
-                            <Snowflake className="h-3.5 w-3.5 text-primary" />
-                          )}
+                        <span className="text-xs font-extrabold uppercase text-zinc-700">
                           {grp === "Coach" ? "Coaches" : grp}
                         </span>
                         <span className="rounded-full bg-red-50 border border-red-200 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
@@ -816,7 +735,7 @@ export function ChristmasRsvpExperience({
                   >
                     <RefreshCw
                       className={cn(
-                        "h-4 w-4 text-primary",
+                        "h-3.5 w-3.5 text-primary",
                         isRefreshing && "animate-spin"
                       )}
                     />
@@ -829,10 +748,7 @@ export function ChristmasRsvpExperience({
             {/* Confirmed RSVPs: Mobile Card Stack (< md) + Desktop Table (md+) */}
             {filteredRecords.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-red-200 bg-white/95 p-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 border border-red-200 text-primary">
-                  <Gift className="h-7 w-7" />
-                </div>
-                <h3 className="mt-3 text-base font-extrabold text-zinc-950">
+                <h3 className="text-base font-extrabold text-zinc-950">
                   No Christmas Party RSVPs Found
                 </h3>
                 <p className="mt-1 text-xs text-zinc-500">
@@ -844,7 +760,6 @@ export function ChristmasRsvpExperience({
                   onClick={() => openRsvpForGroup()}
                   className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-red-700 cursor-pointer"
                 >
-                  <Gift className="h-4 w-4 text-amber-200" />
                   <span>Confirm Attendance Now</span>
                 </button>
               </div>
@@ -864,13 +779,12 @@ export function ChristmasRsvpExperience({
                             <div className="flex items-center gap-1.5">
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[11px] font-bold",
+                                  "rounded-md px-2 py-0.5 font-mono text-[11px] font-bold",
                                   isRecCoach
                                     ? "bg-emerald-800 text-white"
                                     : "bg-red-50 text-primary border border-red-200"
                                 )}
                               >
-                                <Snowflake className="h-3 w-3" />
                                 {rec.roleOrAgeGroup}
                               </span>
                               <span
@@ -961,13 +875,12 @@ export function ChristmasRsvpExperience({
                               <td className="whitespace-nowrap py-3.5 pl-4 pr-3">
                                 <span
                                   className={cn(
-                                    "inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-xs font-bold",
+                                    "inline-flex items-center rounded-md px-2 py-0.5 font-mono text-xs font-bold",
                                     isRecCoach
                                       ? "bg-emerald-800 text-white"
                                       : "bg-red-50 text-primary border border-red-200"
                                   )}
                                 >
-                                  <Snowflake className="h-3 w-3" />
                                   {rec.roleOrAgeGroup}
                                 </span>
                               </td>
@@ -1058,14 +971,10 @@ export function ChristmasRsvpExperience({
                   {/* Candy-cane top accent inside dialog */}
                   <div className="mfc-candy-cane-bar h-1.5 w-full shrink-0" />
 
-                  {/* Sticky Festive Dialog Header */}
-                  <div className="relative flex items-center justify-between gap-3 border-b border-red-100 bg-gradient-to-r from-[#A50D16] via-[#D91B23] to-[#9E0B14] px-4 py-3.5 text-white sm:px-6 sm:py-4 overflow-hidden">
-                    <Snowflake
-                      aria-hidden="true"
-                      className="pointer-events-none absolute right-14 -top-3 h-16 w-16 text-white/10 rotate-12"
-                    />
-                    <div className="relative flex min-w-0 items-center gap-2.5">
-                      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300 bg-white p-1 shadow-xs">
+                  {/* Clean Sticky Festive Dialog Header */}
+                  <div className="flex items-center justify-between gap-3 border-b border-red-100 bg-gradient-to-r from-[#A50D16] via-[#D91B23] to-[#9E0B14] px-4 py-3.5 text-white sm:px-6 sm:py-4">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300 bg-white p-1 shadow-xs">
                         <Image
                           src="/mendiola-logo.png"
                           alt="Mendiola FC"
@@ -1074,18 +983,12 @@ export function ChristmasRsvpExperience({
                           style={{ width: "auto" }}
                           className="h-7 object-contain"
                         />
-                        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-700 text-white">
-                          <TreePine className="h-2.5 w-2.5 text-amber-200" />
-                        </span>
                       </div>
                       <div className="min-w-0">
-                        <Dialog.Title className="flex items-center gap-1.5 truncate text-base font-extrabold leading-tight text-white sm:text-lg">
-                          <Gift className="h-4 w-4 shrink-0 text-amber-300" />
-                          <span className="truncate">
-                            {submittedRecord
-                              ? "Holiday Party Pass"
-                              : "Christmas Party RSVP"}
-                          </span>
+                        <Dialog.Title className="truncate text-base font-extrabold leading-tight text-white sm:text-lg">
+                          {submittedRecord
+                            ? "Holiday Party Pass"
+                            : "Christmas Party RSVP"}
                         </Dialog.Title>
                         <Dialog.Description className="truncate text-[11px] text-red-100">
                           Dec 15, 2026 · 3:00 PM · Valle Maria Mar, Bulacan
@@ -1097,7 +1000,7 @@ export function ChristmasRsvpExperience({
                       <button
                         type="button"
                         aria-label="Close RSVP dialog"
-                        className="relative rounded-xl bg-white/15 p-2 text-white transition hover:bg-white/25 cursor-pointer"
+                        className="rounded-xl bg-white/15 p-2 text-white transition hover:bg-white/25 cursor-pointer"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -1114,15 +1017,10 @@ export function ChristmasRsvpExperience({
                         transition={{ duration: 0.2 }}
                         className="space-y-5"
                       >
-                        <div className="relative overflow-hidden rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5 shadow-sm">
-                          <Snowflake
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -right-4 -bottom-4 h-24 w-24 text-red-100"
-                          />
-                          <div className="relative flex items-center justify-between gap-3 border-b border-red-100 pb-3.5">
+                        <div className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/90 via-white to-amber-50/50 p-4 sm:p-5 shadow-sm">
+                          <div className="flex items-center justify-between gap-3 border-b border-red-100 pb-3.5">
                             <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white">
-                                <PartyPopper className="h-3 w-3 text-amber-200" />
+                              <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white">
                                 {submittedRecord.roleOrAgeGroup === "Coach"
                                   ? "COACH PASS"
                                   : `${submittedRecord.roleOrAgeGroup} DIVISION`}
@@ -1142,7 +1040,7 @@ export function ChristmasRsvpExperience({
                             </div>
                           </div>
 
-                          <dl className="relative mt-3.5 grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                          <dl className="mt-3.5 grid grid-cols-2 gap-3 text-xs sm:text-sm">
                             <div>
                               <dt className="text-[11px] font-semibold text-zinc-500">
                                 Status
@@ -1210,7 +1108,7 @@ export function ChristmasRsvpExperience({
                           <button
                             type="button"
                             onClick={handleResetForAnotherPlayer}
-                            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-extrabold text-primary transition hover:bg-red-100 cursor-pointer"
+                            className="inline-flex h-11 items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-extrabold text-primary transition hover:bg-red-100 cursor-pointer"
                           >
                             + Add Another Player / Sibling
                           </button>
@@ -1220,15 +1118,14 @@ export function ChristmasRsvpExperience({
                               setIsRsvpDialogOpen(false);
                               setActiveTab("roster");
                             }}
-                            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
+                            className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
                           >
-                            <PartyPopper className="h-4 w-4 text-amber-200" />
-                            <span>View Confirmed Guests</span>
+                            View Confirmed Guests
                           </button>
                         </div>
                       </motion.div>
                     ) : (
-                      /* FESTIVE RSVP FORM INSIDE DIALOG */
+                      /* CLEAN FESTIVE RSVP FORM INSIDE DIALOG */
                       <form
                         id="rsvp-dialog-form"
                         onSubmit={handleSubmit}
@@ -1237,9 +1134,8 @@ export function ChristmasRsvpExperience({
                       >
                         {/* 1. AGE GROUP OR COACH */}
                         <div className="space-y-2">
-                          <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-zinc-800">
-                            <TreePine className="h-3.5 w-3.5 text-emerald-700" />
-                            <span>1. Select Age Group or Coach Role</span>
+                          <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800">
+                            1. Select Age Group or Coach Role
                           </label>
                           <div className="grid grid-cols-5 gap-1.5">
                             {ROLE_OR_AGE_GROUP_OPTIONS.map((opt) => {
@@ -1252,32 +1148,13 @@ export function ChristmasRsvpExperience({
                                     handleSelectRoleOrAgeGroup(opt.value)
                                   }
                                   className={cn(
-                                    "flex flex-col items-center justify-center rounded-xl border py-2.5 px-1 text-center transition-all active:scale-95 cursor-pointer",
+                                    "flex items-center justify-center rounded-xl border py-2.5 px-1 text-center text-xs font-extrabold transition-all active:scale-95 cursor-pointer",
                                     selected
                                       ? "border-primary bg-gradient-to-b from-[#D91B23] to-[#B01219] text-white shadow-sm ring-2 ring-primary/20"
                                       : "border-red-100 bg-white text-zinc-800 hover:border-primary/40 hover:bg-red-50/40"
                                   )}
                                 >
-                                  {opt.isCoach ? (
-                                    <Star
-                                      className={cn(
-                                        "h-3.5 w-3.5 mb-0.5",
-                                        selected
-                                          ? "text-amber-200 fill-amber-200"
-                                          : "text-amber-500"
-                                      )}
-                                    />
-                                  ) : (
-                                    <Snowflake
-                                      className={cn(
-                                        "h-3.5 w-3.5 mb-0.5",
-                                        selected ? "text-white" : "text-primary"
-                                      )}
-                                    />
-                                  )}
-                                  <span className="text-xs font-extrabold">
-                                    {opt.shortLabel}
-                                  </span>
+                                  {opt.shortLabel}
                                 </button>
                               );
                             })}
@@ -1289,14 +1166,11 @@ export function ChristmasRsvpExperience({
                           <div className="flex items-center justify-between">
                             <label
                               htmlFor="dialog-player-name"
-                              className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-zinc-800"
+                              className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800"
                             >
-                              <Sparkles className="h-3.5 w-3.5 text-primary" />
-                              <span>
-                                {isCoach
-                                  ? "2. Specific Name of Coach *"
-                                  : `2. Specific Name of Player (${roleOrAgeGroup}) *`}
-                              </span>
+                              {isCoach
+                                ? "2. Specific Name of Coach *"
+                                : `2. Specific Name of Player (${roleOrAgeGroup}) *`}
                             </label>
                             {isCoach && (
                               <span className="rounded-full bg-emerald-800 px-2 py-0.5 font-mono text-[10px] font-bold text-white">
@@ -1325,9 +1199,8 @@ export function ChristmasRsvpExperience({
 
                         {/* 3. ATTENDANCE & SPECIFIC NUMBER OF PAX */}
                         <div className="space-y-3">
-                          <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-zinc-800">
-                            <Gift className="h-3.5 w-3.5 text-primary" />
-                            <span>3. Attendance &amp; Specific Number of Pax</span>
+                          <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800">
+                            3. Attendance &amp; Specific Number of Pax
                           </label>
 
                           <div className="grid grid-cols-2 gap-2">
@@ -1338,14 +1211,13 @@ export function ChristmasRsvpExperience({
                                 if (totalPax < 1) setTotalPax(isCoach ? 1 : 2);
                               }}
                               className={cn(
-                                "flex items-center justify-center gap-1.5 rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
+                                "flex items-center justify-center rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
                                 attendanceStatus === "Attending"
                                   ? "border-primary bg-primary text-white shadow-xs"
                                   : "border-red-100 bg-white text-zinc-700"
                               )}
                             >
-                              <PartyPopper className="h-4 w-4" />
-                              <span>Going (Attending)</span>
+                              Going (Attending)
                             </button>
 
                             <button
@@ -1355,14 +1227,13 @@ export function ChristmasRsvpExperience({
                                 setTotalPax(0);
                               }}
                               className={cn(
-                                "flex items-center justify-center gap-1.5 rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
+                                "flex items-center justify-center rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
                                 attendanceStatus === "Not Attending"
                                   ? "border-zinc-900 bg-zinc-900 text-white shadow-xs"
                                   : "border-red-100 bg-white text-zinc-700"
                               )}
                             >
-                              <X className="h-4 w-4" />
-                              <span>Cannot Attend</span>
+                              Cannot Attend
                             </button>
                           </div>
 
@@ -1487,19 +1358,16 @@ export function ChristmasRsvpExperience({
                                   >
                                     Contact / Viber Number
                                   </label>
-                                  <div className="relative">
-                                    <Phone className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-                                    <input
-                                      id="dialog-contact-player"
-                                      type="tel"
-                                      value={contactNumber}
-                                      onChange={(e) =>
-                                        setContactNumber(e.target.value)
-                                      }
-                                      placeholder="0917 XXX XXXX"
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white pl-9 pr-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                    />
-                                  </div>
+                                  <input
+                                    id="dialog-contact-player"
+                                    type="tel"
+                                    value={contactNumber}
+                                    onChange={(e) =>
+                                      setContactNumber(e.target.value)
+                                    }
+                                    placeholder="0917 XXX XXXX"
+                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                  />
                                 </div>
                               </div>
 
@@ -1528,10 +1396,9 @@ export function ChristmasRsvpExperience({
                               <div className="space-y-1">
                                 <label
                                   htmlFor="dialog-potluck"
-                                  className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-zinc-700"
+                                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
                                 >
-                                  <Utensils className="h-3 w-3 text-primary" />
-                                  <span>Holiday Potluck / Notes (Optional)</span>
+                                  Holiday Potluck / Notes (Optional)
                                 </label>
                                 <input
                                   id="dialog-potluck"
@@ -1565,19 +1432,16 @@ export function ChristmasRsvpExperience({
                                   Parent, Companion &amp; Potluck omitted
                                 </span>
                               </div>
-                              <div className="relative">
-                                <Phone className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-zinc-400" />
-                                <input
-                                  id="dialog-contact-coach"
-                                  type="tel"
-                                  value={contactNumber}
-                                  onChange={(e) =>
-                                    setContactNumber(e.target.value)
-                                  }
-                                  placeholder="0917 XXX XXXX"
-                                  className="h-10 w-full rounded-xl border border-emerald-200 bg-white pl-9 pr-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                />
-                              </div>
+                              <input
+                                id="dialog-contact-coach"
+                                type="tel"
+                                value={contactNumber}
+                                onChange={(e) =>
+                                  setContactNumber(e.target.value)
+                                }
+                                placeholder="0917 XXX XXXX"
+                                className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                              />
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1594,16 +1458,13 @@ export function ChristmasRsvpExperience({
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-5 text-sm font-extrabold text-white shadow-md shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+                          className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-5 text-sm font-extrabold text-white shadow-md shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                         >
-                          <Gift className="h-4 w-4 text-amber-200" />
-                          <span>
-                            {isSubmitting
-                              ? "Saving Holiday RSVP..."
-                              : attendanceStatus === "Attending"
-                                ? `Confirm Christmas Attendance (${totalPax} Pax)`
-                                : "Submit RSVP Response"}
-                          </span>
+                          {isSubmitting
+                            ? "Saving Holiday RSVP..."
+                            : attendanceStatus === "Attending"
+                              ? `Confirm Christmas Attendance (${totalPax} Pax)`
+                              : "Submit RSVP Response"}
                         </button>
                       </form>
                     )}
@@ -1665,7 +1526,7 @@ export function ChristmasRsvpExperience({
             )}
           >
             <div className="relative">
-              <PartyPopper className="h-5 w-5" />
+              <Users className="h-5 w-5" />
               <span className="absolute -right-3.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-white ring-1 ring-amber-200">
                 {stats.totalPax}
               </span>
