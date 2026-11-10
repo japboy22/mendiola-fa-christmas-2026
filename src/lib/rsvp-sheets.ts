@@ -13,6 +13,10 @@ import {
 const SPREADSHEET_ID =
   process.env.SPREADSHEET_ID || EVENT_DETAILS.spreadsheetId;
 
+const DEFAULT_APPS_SCRIPT_URL =
+  process.env.GOOGLE_APPS_SCRIPT_URL?.trim() ||
+  "https://script.google.com/macros/s/AKfycbxtTwLXtfwn01JZOdayy5aN_bCYwi_NhbYhrFmCK9T0DTRWcZARylrCQ5D4psm0-VUP/exec";
+
 const WORKSPACE_STORE_PATH = path.join(
   process.cwd(),
   "data",
@@ -32,7 +36,7 @@ declare global {
 function getMemoryStore(): OverlayStore {
   if (!globalThis.__mendiolaChristmasStore) {
     globalThis.__mendiolaChristmasStore = {
-      appsScriptUrl: process.env.GOOGLE_APPS_SCRIPT_URL?.trim() || "",
+      appsScriptUrl: DEFAULT_APPS_SCRIPT_URL,
       records: [],
     };
   }
@@ -54,17 +58,13 @@ async function readOverlayStore(): Promise<OverlayStore> {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as Partial<OverlayStore>;
-      const mergedMap = new Map<string, ChristmasRsvpRecord>();
-      for (const r of [...(parsed.records ?? []), ...mem.records]) {
-        mergedMap.set(recordKey(r.roleOrAgeGroup, r.playerName), r);
-      }
       const resolved: OverlayStore = {
         appsScriptUrl:
           process.env.GOOGLE_APPS_SCRIPT_URL?.trim() ||
           parsed.appsScriptUrl?.trim() ||
           mem.appsScriptUrl ||
-          "",
-        records: Array.from(mergedMap.values()),
+          DEFAULT_APPS_SCRIPT_URL,
+        records: Array.isArray(parsed.records) ? parsed.records : [],
       };
       globalThis.__mendiolaChristmasStore = resolved;
       return resolved;
@@ -361,6 +361,12 @@ export function computeSummaryStats(
   };
 }
 
+export async function clearLocalOverlayRecords(): Promise<void> {
+  const store = await readOverlayStore();
+  store.records = [];
+  await writeOverlayStore(store);
+}
+
 export async function fetchAllRsvps(): Promise<{
   records: ChristmasRsvpRecord[];
   stats: RsvpSummaryStats;
@@ -370,29 +376,15 @@ export async function fetchAllRsvps(): Promise<{
   const store = await readOverlayStore();
   const status = await getSyncStatus();
   let sheetRecords: ChristmasRsvpRecord[] = [];
+  let sheetFetchSucceeded = false;
 
-  // 1. Try reading directly from Google Sheets public CSV export
-  try {
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
-    const res = await fetch(csvUrl, {
-      redirect: "follow",
-      cache: "no-store",
-    });
-    if (res.ok) {
-      const text = await res.text();
-      if (!text.trim().startsWith("<!DOCTYPE html")) {
-        const rows = parseCsv(text);
-        sheetRecords = parseSheetRows(rows);
-      }
-    }
-  } catch (err) {
-    console.warn("Google Sheet CSV fetch warning:", err);
-  }
-
-  // 2. If Apps Script URL is set and CSV returned empty, try doGet
-  if (sheetRecords.length === 0 && status.appsScriptUrl) {
+  // 1. Prefer live Apps Script doGet first (instant, zero CSV cache delay)
+  if (status.appsScriptUrl) {
     try {
-      const res = await fetch(status.appsScriptUrl, { cache: "no-store" });
+      const res = await fetch(status.appsScriptUrl, {
+        redirect: "follow",
+        cache: "no-store",
+      });
       if (res.ok) {
         const payload = (await res.json()) as {
           ok?: boolean;
@@ -400,30 +392,63 @@ export async function fetchAllRsvps(): Promise<{
         };
         if (payload.ok && Array.isArray(payload.rows)) {
           sheetRecords = parseSheetRows(payload.rows);
+          sheetFetchSucceeded = true;
         }
       }
     } catch {
-      // Ignore fallback error
+      // Fall back to public CSV export
     }
   }
 
-  // Merge sheet records with overlay records (overlay wins if newer or unsynced)
+  // 2. Fallback to Google Sheets public CSV export
+  if (!sheetFetchSucceeded) {
+    try {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
+      const res = await fetch(csvUrl, {
+        redirect: "follow",
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const text = await res.text();
+        if (!text.trim().startsWith("<!DOCTYPE html")) {
+          const rows = parseCsv(text);
+          sheetRecords = parseSheetRows(rows);
+          sheetFetchSucceeded = true;
+        }
+      }
+    } catch (err) {
+      console.warn("Google Sheet CSV fetch warning:", err);
+    }
+  }
+
+  // Merge sheet records with any unsynced local overlay records
   const merged = new Map<string, ChristmasRsvpRecord>();
   for (const r of sheetRecords) {
     merged.set(recordKey(r.roleOrAgeGroup, r.playerName), r);
   }
+
+  let storeChanged = false;
+  const remainingLocalRecords: ChristmasRsvpRecord[] = [];
+
   for (const localRec of store.records) {
     const key = recordKey(localRec.roleOrAgeGroup, localRec.playerName);
     const existingSheet = merged.get(key);
-    if (!existingSheet) {
+    if (existingSheet) {
+      // Sheet already has this entry; keep sheet as source of truth
+      remainingLocalRecords.push({ ...localRec, syncedToSheet: true });
+    } else if (!localRec.syncedToSheet || !sheetFetchSucceeded) {
+      // Keep unsynced local records or all local records if offline
       merged.set(key, localRec);
+      remainingLocalRecords.push(localRec);
     } else {
-      // If the sheet already has this entry, mark it synced
-      merged.set(key, {
-        ...localRec,
-        syncedToSheet: true,
-      });
+      // Was previously syncedToSheet=true, but removed from Google Sheet -> prune local copy
+      storeChanged = true;
     }
+  }
+
+  if (storeChanged) {
+    store.records = remainingLocalRecords;
+    await writeOverlayStore(store);
   }
 
   const allRecords = Array.from(merged.values()).sort((a, b) =>

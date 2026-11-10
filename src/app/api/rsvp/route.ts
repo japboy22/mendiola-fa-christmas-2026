@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  clearLocalOverlayRecords,
   configureAndSyncAppsScript,
   fetchAllRsvps,
   normalizeAttendanceStatus,
@@ -42,6 +43,16 @@ export async function POST(request: NextRequest) {
       contactNumber?: string;
       potluckNotes?: string;
     };
+
+    if (body.action === "clearLocal") {
+      await clearLocalOverlayRecords();
+      const updated = await fetchAllRsvps();
+      return NextResponse.json({
+        ok: true,
+        message: "Cleared local RSVP records.",
+        ...updated,
+      });
+    }
 
     if (body.action === "configureAppsScript") {
       const result = await configureAndSyncAppsScript(body.appsScriptUrl || "");
