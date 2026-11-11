@@ -152,17 +152,15 @@ export function ChristmasRsvpExperience({
 
   // Form state inside the RSVP Dialog Box
   const [roleOrAgeGroup, setRoleOrAgeGroup] =
-    React.useState<RoleOrAgeGroup>("U5");
+    React.useState<RoleOrAgeGroup | "">("");
   const [playerName, setPlayerName] = React.useState("");
   const [siblings, setSiblings] = React.useState<
-    { id: string; ageGroup: PlayerAgeGroup; name: string }[]
+    { id: string; ageGroup: PlayerAgeGroup | ""; name: string }[]
   >([]);
   const [attendanceStatus, setAttendanceStatus] =
     React.useState<AttendanceStatus>("Attending");
   const [totalPax, setTotalPax] = React.useState<number>(2);
-  const [companionList, setCompanionList] = React.useState<string[]>([]);
-  const [companionInput, setCompanionInput] = React.useState("");
-  const companionInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [companionList, setCompanionList] = React.useState<string[]>([""]);
 
   const isCoach = roleOrAgeGroup === "Coach";
   const playerCount = isCoach ? 1 : 1 + siblings.length;
@@ -171,16 +169,13 @@ export function ChristmasRsvpExperience({
     attendanceStatus === "Attending"
       ? Math.max(0, totalPax - playerCount)
       : 0;
-  const isCompanionLimitReached = companionList.length >= maxCompanions;
 
   const addSiblingPlayer = () => {
-    const defaultAgeGroup: PlayerAgeGroup =
-      roleOrAgeGroup === "Coach" ? "U5" : roleOrAgeGroup;
     setSiblings((prev) => [
       ...prev,
       {
         id: `sib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        ageGroup: defaultAgeGroup,
+        ageGroup: "",
         name: "",
       },
     ]);
@@ -192,7 +187,7 @@ export function ChristmasRsvpExperience({
 
   const updateSiblingPlayer = (
     id: string,
-    patch: Partial<{ ageGroup: PlayerAgeGroup; name: string }>
+    patch: Partial<{ ageGroup: PlayerAgeGroup | ""; name: string }>
   ) => {
     setSiblings((prev) =>
       prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
@@ -209,118 +204,64 @@ export function ChristmasRsvpExperience({
     if (formError) setFormError(null);
   };
 
+  const [formError, setFormError] = React.useState<string | null>(null);
+
   const updateTotalPax = React.useCallback(
     (nextPax: number, nextPlayerCount = playerCount) => {
       const clampedPax = Math.max(nextPlayerCount, Math.min(30, nextPax));
       const nextMaxCompanions = Math.max(0, clampedPax - nextPlayerCount);
       setTotalPax(clampedPax);
-      setCompanionList((prev) => {
-        const sliced =
-          prev.length > nextMaxCompanions
-            ? prev.slice(0, nextMaxCompanions)
-            : prev;
-        if (sliced.length >= nextMaxCompanions) {
-          setCompanionInput("");
-        }
-        return sliced;
-      });
+      setCompanionList((prev) =>
+        Array.from({ length: nextMaxCompanions }, (_, i) => prev[i] ?? "")
+      );
+      if (formError) setFormError(null);
     },
-    [playerCount]
+    [playerCount, formError]
   );
 
-  const addCompanionBadges = React.useCallback(
-    (rawNames: string[]) => {
-      const cleaned = rawNames
-        .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
-        .filter(Boolean);
-      if (cleaned.length === 0) return;
+  const updateCompanionName = React.useCallback(
+    (index: number, value: string) => {
       setCompanionList((prev) => {
-        const remainingSlots = Math.max(0, maxCompanions - prev.length);
-        if (remainingSlots <= 0) return prev;
-        return [...prev, ...cleaned.slice(0, remainingSlots)];
+        const next = Array.from(
+          { length: Math.max(prev.length, maxCompanions, index + 1) },
+          (_, i) => prev[i] ?? ""
+        );
+        next[index] = value;
+        return next;
       });
+      if (formError) setFormError(null);
     },
-    [maxCompanions]
+    [maxCompanions, formError]
   );
 
-  const removeCompanionBadge = React.useCallback((indexToRemove: number) => {
-    setCompanionList((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  }, []);
+  const addCompanionSlot = () => {
+    if (totalPax >= 30) return;
+    const nextPax = Math.min(30, totalPax + 1);
+    const nextMaxCompanions = Math.max(0, nextPax - playerCount);
+    setTotalPax(nextPax);
+    setCompanionList((prev) =>
+      Array.from({ length: nextMaxCompanions }, (_, i) => prev[i] ?? "")
+    );
+    if (formError) setFormError(null);
+  };
 
-  const handleCompanionInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (companionList.length >= maxCompanions) {
-      setCompanionInput("");
-      return;
-    }
-
-    const val = e.target.value;
-
-    // Split into badge(s) when typing a comma "," or period "." (unless it's a short prefix/initial like "Ma." or "J.")
-    if (val.includes(",")) {
-      const parts = val.split(",");
-      const remainder = parts.pop() ?? "";
-      const remainingSlots = Math.max(
-        0,
-        maxCompanions - companionList.length
+  const removeCompanionSlot = (indexToRemove: number) => {
+    const nextPax = Math.max(minAttendingPax, totalPax - 1);
+    const nextMaxCompanions = Math.max(0, nextPax - playerCount);
+    setTotalPax(nextPax);
+    setCompanionList((prev) => {
+      const padded = Array.from(
+        { length: maxCompanions },
+        (_, i) => prev[i] ?? ""
       );
-      const accepted = parts
-        .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
-        .filter(Boolean)
-        .slice(0, remainingSlots);
-      addCompanionBadges(accepted);
-      setCompanionInput(
-        companionList.length + accepted.length >= maxCompanions ? "" : remainder
+      const filtered = padded.filter((_, idx) => idx !== indexToRemove);
+      return Array.from(
+        { length: nextMaxCompanions },
+        (_, i) => filtered[i] ?? ""
       );
-      return;
-    }
-
-    if (val.endsWith(".")) {
-      const candidate = val.slice(0, -1).trim();
-      const lower = candidate.toLowerCase();
-      const isPrefixOrInitial =
-        candidate.length <= 1 ||
-        ["ma", "mr", "ms", "mrs", "dr", "jr", "sr", "st"].includes(lower);
-      if (candidate && !isPrefixOrInitial) {
-        addCompanionBadges([candidate]);
-        setCompanionInput("");
-        return;
-      }
-    }
-
-    setCompanionInput(val);
+    });
+    if (formError) setFormError(null);
   };
-
-  const handleCompanionKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      if (companionInput.trim() && companionList.length < maxCompanions) {
-        addCompanionBadges([companionInput]);
-        setCompanionInput("");
-      }
-    } else if (
-      e.key === "Backspace" &&
-      companionInput === "" &&
-      companionList.length > 0
-    ) {
-      e.preventDefault();
-      setCompanionList((prev) => prev.slice(0, -1));
-    }
-  };
-
-  const handleCompanionBlur = () => {
-    if (companionInput.trim() && companionList.length < maxCompanions) {
-      addCompanionBadges(companionInput.split(","));
-      setCompanionInput("");
-    } else if (companionList.length >= maxCompanions) {
-      setCompanionInput("");
-    }
-  };
-
-  const [formError, setFormError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submittedRecord, setSubmittedRecord] =
     React.useState<ChristmasRsvpRecord | null>(null);
@@ -349,6 +290,8 @@ export function ChristmasRsvpExperience({
   const openRsvpForGroup = (grp?: RoleOrAgeGroup) => {
     if (grp) {
       handleSelectRoleOrAgeGroup(grp);
+    } else {
+      setRoleOrAgeGroup("");
     }
     setSubmittedRecord(null);
     setSubmittedSiblings([]);
@@ -382,6 +325,13 @@ export function ChristmasRsvpExperience({
     e.preventDefault();
     setFormError(null);
 
+    if (!roleOrAgeGroup) {
+      setFormError(
+        "Please select an Age Group (U5, U7, U9, U13, U15) or Coach Role."
+      );
+      return;
+    }
+
     const trimmedName = playerName.trim();
     if (!trimmedName) {
       setFormError(
@@ -394,6 +344,12 @@ export function ChristmasRsvpExperience({
 
     if (!isCoach) {
       for (let i = 0; i < siblings.length; i++) {
+        if (!siblings[i].ageGroup) {
+          setFormError(
+            `Please select an Age Group (U5, U7, U9, U13, or U15) for Sibling Player #${i + 1}.`
+          );
+          return;
+        }
         if (!siblings[i].name.trim()) {
           setFormError(
             `Please enter the full name for Sibling Player #${i + 1}.`
@@ -413,29 +369,38 @@ export function ChristmasRsvpExperience({
       return;
     }
 
+    if (attendanceStatus === "Attending" && maxCompanions > 0) {
+      for (let i = 0; i < maxCompanions; i++) {
+        if (!(companionList[i] ?? "").trim()) {
+          setFormError(
+            `Please enter the full name for Companion #${i + 1}.`
+          );
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
 
     const isAttending = attendanceStatus === "Attending";
-    const remainingSlots = Math.max(0, maxCompanions - companionList.length);
-    const pendingCompanions = companionInput
-      .split(",")
-      .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
-      .filter(Boolean)
-      .slice(0, remainingSlots);
-    const finalCompanionList = [
-      ...companionList.slice(0, maxCompanions),
-      ...pendingCompanions,
-    ];
+    const finalCompanionList = Array.from(
+      { length: maxCompanions },
+      (_, i) => (companionList[i] ?? "").trim()
+    ).filter(Boolean);
     const mergedCompanions = finalCompanionList.join(", ");
-    if (pendingCompanions.length > 0) {
-      setCompanionList(finalCompanionList);
-      setCompanionInput("");
-    }
 
     const activeSiblings = !isCoach
       ? siblings
+          .filter(
+            (
+              s
+            ): s is {
+              id: string;
+              ageGroup: PlayerAgeGroup;
+              name: string;
+            } => Boolean(s.ageGroup && s.name.trim())
+          )
           .map((s) => ({ ageGroup: s.ageGroup, name: s.name.trim() }))
-          .filter((s) => Boolean(s.name))
       : [];
 
     const primaryPax = isAttending
@@ -1439,7 +1404,7 @@ export function ChristmasRsvpExperience({
                         {/* 1. AGE GROUP OR COACH */}
                         <div className="space-y-2">
                           <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800">
-                            1. Select Age Group or Coach Role
+                            1. Select Age Group or Coach Role *
                           </label>
                           <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
                             {ROLE_OR_AGE_GROUP_OPTIONS.map((opt) => {
@@ -1474,21 +1439,14 @@ export function ChristmasRsvpExperience({
                             >
                               {isCoach
                                 ? "2. Specific Name of Coach *"
-                                : `2. Specific Name of Player (${roleOrAgeGroup}) *`}
+                                : roleOrAgeGroup
+                                  ? `2. Specific Name of Player (${roleOrAgeGroup}) *`
+                                  : "2. Specific Name of Player *"}
                             </label>
-                            {isCoach ? (
+                            {isCoach && (
                               <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-800 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
                                 Coach Mode
                               </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={addSiblingPlayer}
-                                className="shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-extrabold text-primary transition hover:bg-red-100/80 active:scale-95 cursor-pointer"
-                              >
-                                <Plus className="h-3.5 w-3.5 shrink-0" />
-                                <span>Add Sibling as Player</span>
-                              </button>
                             )}
                           </div>
 
@@ -1511,7 +1469,7 @@ export function ChristmasRsvpExperience({
 
                           {/* Sibling Player Rows */}
                           {!isCoach && siblings.length > 0 && (
-                            <div className="space-y-2 pt-1">
+                            <div className="space-y-2 pt-0.5">
                               {siblings.map((sib, idx) => (
                                 <div
                                   key={sib.id}
@@ -1519,7 +1477,10 @@ export function ChristmasRsvpExperience({
                                 >
                                   <div className="flex items-center justify-between gap-2">
                                     <span className="truncate whitespace-nowrap text-[11px] font-extrabold uppercase tracking-wider text-primary">
-                                      Sibling Player #{idx + 1} ({sib.ageGroup}) *
+                                      Sibling Player #{idx + 1}{" "}
+                                      {sib.ageGroup
+                                        ? `(${sib.ageGroup}) *`
+                                        : "(Select Age Group *)"}
                                     </span>
                                     <button
                                       type="button"
@@ -1531,34 +1492,39 @@ export function ChristmasRsvpExperience({
                                     </button>
                                   </div>
 
-                                  <div className="grid grid-cols-5 gap-1">
-                                    {(
-                                      [
-                                        "U5",
-                                        "U7",
-                                        "U9",
-                                        "U13",
-                                        "U15",
-                                      ] as PlayerAgeGroup[]
-                                    ).map((div) => (
-                                      <button
-                                        key={div}
-                                        type="button"
-                                        onClick={() =>
-                                          updateSiblingPlayer(sib.id, {
-                                            ageGroup: div,
-                                          })
-                                        }
-                                        className={cn(
-                                          "whitespace-nowrap rounded-lg border py-1.5 text-center font-mono text-[11px] font-extrabold transition cursor-pointer",
-                                          sib.ageGroup === div
-                                            ? "border-primary bg-primary text-white shadow-2xs"
-                                            : "border-red-100 bg-white text-zinc-700 hover:border-primary/40"
-                                        )}
-                                      >
-                                        {div}
-                                      </button>
-                                    ))}
+                                  <div className="space-y-1">
+                                    <span className="block whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-zinc-600">
+                                      Select Sibling Age Group *
+                                    </span>
+                                    <div className="grid grid-cols-5 gap-1">
+                                      {(
+                                        [
+                                          "U5",
+                                          "U7",
+                                          "U9",
+                                          "U13",
+                                          "U15",
+                                        ] as PlayerAgeGroup[]
+                                      ).map((div) => (
+                                        <button
+                                          key={div}
+                                          type="button"
+                                          onClick={() =>
+                                            updateSiblingPlayer(sib.id, {
+                                              ageGroup: div,
+                                            })
+                                          }
+                                          className={cn(
+                                            "whitespace-nowrap rounded-lg border py-1.5 text-center font-mono text-[11px] font-extrabold transition cursor-pointer",
+                                            sib.ageGroup === div
+                                              ? "border-primary bg-primary text-white shadow-2xs"
+                                              : "border-red-100 bg-white text-zinc-700 hover:border-primary/40"
+                                          )}
+                                        >
+                                          {div}
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
 
                                   <input
@@ -1570,12 +1536,24 @@ export function ChristmasRsvpExperience({
                                         name: e.target.value,
                                       })
                                     }
-                                    placeholder={`Enter Sibling #${idx + 1}'s full name`}
+                                    placeholder={`Enter Sibling #${idx + 1}'s full name *`}
                                     className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   />
                                 </div>
                               ))}
                             </div>
+                          )}
+
+                          {/* Add Sibling as Player Button (Below Player Name) */}
+                          {!isCoach && (
+                            <button
+                              type="button"
+                              onClick={addSiblingPlayer}
+                              className="inline-flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-dashed border-red-200 bg-red-50/50 px-3 py-2 text-xs font-extrabold text-primary transition hover:border-primary/40 hover:bg-red-100/70 active:scale-[0.99] cursor-pointer"
+                            >
+                              <Plus className="h-3.5 w-3.5 shrink-0" />
+                              <span>Add Sibling as Player</span>
+                            </button>
                           )}
                         </div>
 
@@ -1591,7 +1569,7 @@ export function ChristmasRsvpExperience({
                               onClick={() => {
                                 setAttendanceStatus("Attending");
                                 if (totalPax < minAttendingPax) {
-                                  setTotalPax(
+                                  updateTotalPax(
                                     isCoach ? 1 : Math.max(2, minAttendingPax)
                                   );
                                 }
@@ -1612,7 +1590,6 @@ export function ChristmasRsvpExperience({
                                 setAttendanceStatus("Not Attending");
                                 setTotalPax(0);
                                 setCompanionList([]);
-                                setCompanionInput("");
                               }}
                               className={cn(
                                 "flex items-center justify-center whitespace-nowrap rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
@@ -1721,112 +1698,116 @@ export function ChristmasRsvpExperience({
                               exit={{ opacity: 0, y: -6 }}
                               transition={{ duration: 0.16 }}
                               className={cn(
-                                "space-y-2 rounded-2xl border p-3.5",
+                                "space-y-2.5 rounded-2xl border p-3.5",
                                 isCoach
                                   ? "border-emerald-200 bg-emerald-50/50"
                                   : "border-red-100 bg-red-50/35"
                               )}
                             >
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <label
-                                    htmlFor="dialog-companions"
-                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                  >
-                                    4. Companion Names{" "}
-                                    {companionCount > 0
-                                      ? `(${companionList.length}/${companionCount} guest${companionCount > 1 ? "s" : ""})`
-                                      : `(0 guests for ${playerCount} Pax)`}
-                                  </label>
-                                  <span
-                                    className={cn(
-                                      "shrink-0 whitespace-nowrap text-[10px] font-medium",
-                                      isCoach
-                                        ? "text-emerald-900/70"
-                                        : "text-zinc-500"
-                                    )}
-                                  >
-                                    {companionCount === 0
-                                      ? `Increase Pax above ${playerCount} to add companions`
-                                      : isCompanionLimitReached
-                                        ? `Max ${companionCount} companion${companionCount > 1 ? "s" : ""} reached`
-                                        : "Type a comma (,) to add badge"}
-                                  </span>
-                                </div>
-
-                                <div
-                                  onClick={() => {
-                                    if (!isCompanionLimitReached) {
-                                      companionInputRef.current?.focus();
-                                    }
-                                  }}
+                              <div className="flex items-center justify-between gap-2">
+                                <label
+                                  htmlFor="dialog-companions"
+                                  className="min-w-0 truncate text-[11px] font-extrabold uppercase tracking-wider text-zinc-800"
+                                >
+                                  4. Companion Names{" "}
+                                  {companionCount > 0
+                                    ? `(${companionCount} guest${companionCount > 1 ? "s" : ""}) *`
+                                    : `(0 guests)`}
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={addCompanionSlot}
+                                  disabled={totalPax >= 30}
                                   className={cn(
-                                    "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border bg-white px-2.5 py-1.5 transition",
-                                    isCoach
-                                      ? "border-emerald-200 focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/20"
-                                      : "border-red-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
-                                    companionCount === 0
-                                      ? "bg-zinc-100/80 border-zinc-200 cursor-not-allowed"
-                                      : isCompanionLimitReached
-                                        ? "cursor-default"
-                                        : "cursor-text"
+                                    "shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-extrabold transition active:scale-95",
+                                    totalPax >= 30
+                                      ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                                      : isCoach
+                                        ? "border-emerald-200 bg-white text-emerald-900 hover:bg-emerald-100/70 cursor-pointer"
+                                        : "border-red-200 bg-white text-primary hover:bg-red-100/70 cursor-pointer"
                                   )}
                                 >
-                                  {companionList.map((name, idx) => (
-                                    <span
-                                      key={`${name}-${idx}`}
-                                      className={cn(
-                                        "inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-bold shadow-2xs",
-                                        isCoach
-                                          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                                          : "border-red-200 bg-red-50 text-primary"
-                                      )}
-                                    >
-                                      <span className="truncate">{name}</span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          removeCompanionBadge(idx);
-                                        }}
-                                        aria-label={`Remove ${name}`}
+                                  <Plus className="h-3.5 w-3.5 shrink-0" />
+                                  <span>Add Companion</span>
+                                </button>
+                              </div>
+
+                              {companionCount === 0 ? (
+                                <div className="flex h-10 w-full items-center justify-between rounded-xl border border-dashed border-zinc-200 bg-white/80 px-3 text-xs text-zinc-500">
+                                  <span className="truncate whitespace-nowrap">
+                                    {isCoach
+                                      ? "1 Pax = Coach only — tap \"+ Add Companion\" to bring a guest"
+                                      : `${playerCount} Pax = ${playerCount > 1 ? "Players" : "Player"} only — tap "+ Add Companion" to bring a guest`}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  {Array.from(
+                                    { length: companionCount },
+                                    (_, idx) => (
+                                      <div
+                                        key={`companion-slot-${idx}`}
                                         className={cn(
-                                          "ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition cursor-pointer",
+                                          "flex h-10 w-full items-center gap-2 rounded-xl border bg-white px-2.5 transition",
                                           isCoach
-                                            ? "text-emerald-800/70 hover:bg-emerald-200/70 hover:text-emerald-950"
-                                            : "text-primary/70 hover:bg-red-200/70 hover:text-primary"
+                                            ? "border-emerald-200 focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/20"
+                                            : "border-red-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
                                         )}
                                       >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </span>
-                                  ))}
-
-                                  {!isCompanionLimitReached ? (
-                                    <input
-                                      ref={companionInputRef}
-                                      id="dialog-companions"
-                                      type="text"
-                                      value={companionInput}
-                                      onChange={handleCompanionInputChange}
-                                      onKeyDown={handleCompanionKeyDown}
-                                      onBlur={handleCompanionBlur}
-                                      placeholder={
-                                        companionList.length === 0
-                                          ? "Type name + comma (e.g. Santa Claus, Rudolf)..."
-                                          : `Add ${companionCount - companionList.length} more companion${companionCount - companionList.length > 1 ? "s" : ""}...`
-                                      }
-                                      className="min-w-[140px] flex-1 bg-transparent px-1 py-0.5 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none"
-                                    />
-                                  ) : companionCount === 0 ? (
-                                    <span className="truncate whitespace-nowrap px-1 py-0.5 text-xs text-zinc-400">
-                                      {isCoach
-                                        ? "1 Pax = Coach only (increase Pax to add companions)"
-                                        : `${playerCount} Pax = ${playerCount > 1 ? "Players" : "Player"} only (increase Pax to add companions)`}
-                                    </span>
-                                  ) : null}
+                                        <span
+                                          className={cn(
+                                            "shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 font-mono text-[11px] font-extrabold",
+                                            isCoach
+                                              ? "bg-emerald-100/80 text-emerald-900"
+                                              : "bg-red-50 text-primary"
+                                          )}
+                                        >
+                                          #{idx + 1}
+                                        </span>
+                                        <input
+                                          id={
+                                            idx === 0
+                                              ? "dialog-companions"
+                                              : `dialog-companion-${idx + 1}`
+                                          }
+                                          type="text"
+                                          required
+                                          value={companionList[idx] ?? ""}
+                                          onChange={(e) =>
+                                            updateCompanionName(
+                                              idx,
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder={
+                                            idx === 0
+                                              ? "Companion #1 full name (e.g. Santa Claus) *"
+                                              : idx === 1
+                                                ? "Companion #2 full name (e.g. Rudolf) *"
+                                                : `Companion #${idx + 1} full name *`
+                                          }
+                                          className="min-w-0 flex-1 bg-transparent text-base sm:text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:outline-none"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            removeCompanionSlot(idx)
+                                          }
+                                          aria-label={`Remove Companion #${idx + 1}`}
+                                          className={cn(
+                                            "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition cursor-pointer",
+                                            isCoach
+                                              ? "text-emerald-800/60 hover:bg-emerald-100 hover:text-emerald-950"
+                                              : "text-zinc-400 hover:bg-red-50 hover:text-primary"
+                                          )}
+                                        >
+                                          <X className="h-3.5 w-3.5" />
+                                        </button>
+                                      </div>
+                                    )
+                                  )}
                                 </div>
-                              </div>
+                              )}
                             </motion.div>
                           ) : null}
                         </AnimatePresence>
