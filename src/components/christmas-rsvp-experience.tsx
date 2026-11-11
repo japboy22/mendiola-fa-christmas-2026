@@ -42,7 +42,8 @@ function useEventCountdown(targetIso: string) {
     days: number;
     hours: number;
     minutes: number;
-  }>({ days: 24, hours: 0, minutes: 0 });
+    seconds: number;
+  }>({ days: 24, hours: 0, minutes: 0, seconds: 0 });
 
   React.useEffect(() => {
     const update = () => {
@@ -52,14 +53,61 @@ function useEventCountdown(targetIso: string) {
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      setTimeLeft({ days, hours, minutes });
+      const seconds = Math.floor((diff / 1000) % 60);
+      setTimeLeft({ days, hours, minutes, seconds });
     };
     update();
-    const id = window.setInterval(update, 30_000);
+    const id = window.setInterval(update, 1_000);
     return () => window.clearInterval(id);
   }, [targetIso]);
 
   return timeLeft;
+}
+
+function SplitFlapClockUnit({
+  value,
+  label,
+}: {
+  value: number;
+  label: string;
+}) {
+  const formatted = String(value).padStart(2, "0");
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative flex h-11 w-13 sm:h-12 sm:w-14 items-center justify-center overflow-hidden rounded-xl border border-zinc-200/90 bg-gradient-to-b from-zinc-50 via-white to-zinc-100/80 shadow-2xs">
+        {/* Split-flap horizontal hinge line & side notches */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-zinc-200/75"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 top-1/2 z-10 h-1.5 w-1 -translate-y-1/2 rounded-r bg-zinc-300/80"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-1/2 z-10 h-1.5 w-1 -translate-y-1/2 rounded-l bg-zinc-300/80"
+        />
+
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={formatted}
+            initial={{ y: -18, opacity: 0, rotateX: -65, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, rotateX: 0, scale: 1 }}
+            exit={{ y: 18, opacity: 0, rotateX: 65, scale: 0.9 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="inline-block font-mono text-lg font-extrabold tracking-tight text-zinc-900 sm:text-xl tabular-nums"
+          >
+            {formatted}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <span className="mt-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+        {label}
+      </span>
+    </div>
+  );
 }
 
 function downloadCalendarIcs() {
@@ -112,10 +160,8 @@ export function ChristmasRsvpExperience({
   const [attendanceStatus, setAttendanceStatus] =
     React.useState<AttendanceStatus>("Attending");
   const [totalPax, setTotalPax] = React.useState<number>(2);
-  const [parentName, setParentName] = React.useState("");
   const [companionList, setCompanionList] = React.useState<string[]>([]);
   const [companionInput, setCompanionInput] = React.useState("");
-  const [contactNumber, setContactNumber] = React.useState("");
   const companionInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const isCoach = roleOrAgeGroup === "Coach";
@@ -293,7 +339,6 @@ export function ChristmasRsvpExperience({
     setRoleOrAgeGroup(nextRole);
     setFormError(null);
     if (nextRole === "Coach") {
-      setParentName("");
       setSiblings([]);
     }
     if (attendanceStatus === "Attending" && totalPax < 1) {
@@ -358,11 +403,6 @@ export function ChristmasRsvpExperience({
       }
     }
 
-    if (!isCoach && !parentName.trim()) {
-      setFormError("Please enter the Parent / Guardian name.");
-      return;
-    }
-
     if (
       attendanceStatus === "Attending" &&
       (!totalPax || totalPax < minAttendingPax)
@@ -411,9 +451,9 @@ export function ChristmasRsvpExperience({
           playerName: trimmedName,
           attendanceStatus,
           totalPax: primaryPax,
-          parentName: isCoach ? "" : parentName.trim(),
+          parentName: "",
           companionNames: isAttending ? mergedCompanions : "",
-          contactNumber: isAttending ? contactNumber.trim() : "",
+          contactNumber: "",
         }),
       });
 
@@ -445,11 +485,11 @@ export function ChristmasRsvpExperience({
             playerName: sib.name,
             attendanceStatus,
             totalPax: isAttending ? 1 : 0,
-            parentName: parentName.trim(),
+            parentName: "",
             companionNames: isAttending
               ? `Sibling of ${trimmedName} (${roleOrAgeGroup})`
               : "",
-            contactNumber: isAttending ? contactNumber.trim() : "",
+            contactNumber: "",
           }),
         });
         const sibData = (await sibRes.json()) as {
@@ -514,9 +554,7 @@ export function ChristmasRsvpExperience({
         const hay = [
           r.playerName,
           r.roleOrAgeGroup,
-          r.parentName,
           r.companionNames,
-          r.contactNumber,
         ]
           .join(" ")
           .toLowerCase();
@@ -689,35 +727,46 @@ export function ChristmasRsvpExperience({
 
                   {/* Muted Countdown + Emphasized Primary RSVP Action */}
                   <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-                    <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-2.5 sm:min-w-[240px]">
-                      <div className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
-                        Christmas Party Countdown
+                    <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-2.5 sm:min-w-[276px]">
+                      <div className="mb-2 flex items-center justify-center gap-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+                        <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-pulse" />
+                        <span>Christmas Party Countdown</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
-                            {countdown.days}
-                          </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
-                            Days
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
-                            {countdown.hours}
-                          </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
-                            Hours
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
-                            {countdown.minutes}
-                          </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
-                            Mins
-                          </div>
-                        </div>
+                      <div className="flex items-start justify-center gap-1 sm:gap-1.5">
+                        <SplitFlapClockUnit
+                          value={countdown.days}
+                          label="Days"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="mt-2.5 font-mono text-sm font-extrabold text-zinc-400 animate-pulse"
+                        >
+                          :
+                        </span>
+                        <SplitFlapClockUnit
+                          value={countdown.hours}
+                          label="Hours"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="mt-2.5 font-mono text-sm font-extrabold text-zinc-400 animate-pulse"
+                        >
+                          :
+                        </span>
+                        <SplitFlapClockUnit
+                          value={countdown.minutes}
+                          label="Mins"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="mt-2.5 font-mono text-sm font-extrabold text-zinc-400 animate-pulse"
+                        >
+                          :
+                        </span>
+                        <SplitFlapClockUnit
+                          value={countdown.seconds}
+                          label="Secs"
+                        />
                       </div>
                     </div>
 
@@ -872,7 +921,6 @@ export function ChristmasRsvpExperience({
               ) : (
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                   {records.slice(0, 6).map((rec) => {
-                    const isRecCoach = rec.roleOrAgeGroup === "Coach";
                     return (
                       <div
                         key={rec.id}
@@ -887,9 +935,9 @@ export function ChristmasRsvpExperience({
                               {rec.playerName}
                             </span>
                           </div>
-                          {!isRecCoach && rec.parentName && (
+                          {rec.companionNames && (
                             <p className="mt-0.5 truncate text-xs text-zinc-500">
-                              Parent: {rec.parentName}
+                              Companions: {rec.companionNames}
                             </p>
                           )}
                         </div>
@@ -971,7 +1019,7 @@ export function ChristmasRsvpExperience({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search player, coach, parent, or companion..."
+                    placeholder="Search player, coach, or companion..."
                     className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-9 text-base sm:text-sm text-zinc-900 transition-all duration-200 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
                   />
                   {searchQuery && (
@@ -1056,7 +1104,6 @@ export function ChristmasRsvpExperience({
                 {/* Mobile Card List (< 768px) */}
                 <div className="grid grid-cols-1 gap-2.5 md:hidden">
                   {filteredRecords.map((rec) => {
-                    const isRecCoach = rec.roleOrAgeGroup === "Coach";
                     return (
                       <div
                         key={rec.id}
@@ -1091,25 +1138,12 @@ export function ChristmasRsvpExperience({
                           )}
                         </div>
 
-                        {((!isRecCoach && rec.parentName) ||
-                          rec.companionNames) && (
-                          <div className="border-t border-zinc-100 pt-2 text-xs text-zinc-600 space-y-1">
-                            {!isRecCoach && rec.parentName && (
-                              <div>
-                                <span className="font-bold text-zinc-800">
-                                  Parent/Guardian:
-                                </span>{" "}
-                                {rec.parentName}
-                              </div>
-                            )}
-                            {rec.companionNames && (
-                              <div>
-                                <span className="font-bold text-zinc-800">
-                                  Companions:
-                                </span>{" "}
-                                {rec.companionNames}
-                              </div>
-                            )}
+                        {rec.companionNames && (
+                          <div className="border-t border-zinc-100 pt-2 text-xs text-zinc-600">
+                            <span className="font-bold text-zinc-800">
+                              Companions:
+                            </span>{" "}
+                            {rec.companionNames}
                           </div>
                         )}
                       </div>
@@ -1127,13 +1161,11 @@ export function ChristmasRsvpExperience({
                           <th className="px-3 py-3.5">Player / Coach Name</th>
                           <th className="px-3 py-3.5">Status</th>
                           <th className="px-3 py-3.5 text-center">Total Pax</th>
-                          <th className="px-3 py-3.5">Parent / Guardian</th>
                           <th className="px-3 py-3.5 pr-4">Companions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-100">
                         {filteredRecords.map((rec) => {
-                          const isRecCoach = rec.roleOrAgeGroup === "Coach";
                           return (
                             <tr
                               key={rec.id}
@@ -1161,15 +1193,6 @@ export function ChristmasRsvpExperience({
                               </td>
                               <td className="whitespace-nowrap px-3 py-3.5 text-center font-mono text-base font-extrabold text-zinc-900">
                                 {rec.totalPax}
-                              </td>
-                              <td className="px-3 py-3.5 text-zinc-700">
-                                {isRecCoach ? (
-                                  <span className="text-xs italic text-zinc-400">
-                                    —
-                                  </span>
-                                ) : (
-                                  rec.parentName || "—"
-                                )}
                               </td>
                               <td className="px-3 py-3.5 pr-4 text-zinc-600">
                                 {rec.companionNames || "—"}
@@ -1380,20 +1403,9 @@ export function ChristmasRsvpExperience({
                               </div>
                             )}
 
-                            {submittedRecord.roleOrAgeGroup !== "Coach" &&
-                              submittedRecord.parentName && (
-                                <div className="col-span-2 sm:col-span-1">
-                                  <dt className="text-[11px] font-semibold text-zinc-500">
-                                    Parent / Guardian
-                                  </dt>
-                                  <dd className="font-bold text-zinc-950">
-                                    {submittedRecord.parentName}
-                                  </dd>
-                                </div>
-                              )}
                             {submittedRecord.attendanceStatus === "Attending" &&
                               submittedRecord.companionNames && (
-                                <div className="col-span-2 sm:col-span-1">
+                                <div className="col-span-2">
                                   <dt className="text-[11px] font-semibold text-zinc-500">
                                     Companions
                                   </dt>
@@ -1599,7 +1611,6 @@ export function ChristmasRsvpExperience({
                               onClick={() => {
                                 setAttendanceStatus("Not Attending");
                                 setTotalPax(0);
-                                setContactNumber("");
                                 setCompanionList([]);
                                 setCompanionInput("");
                               }}
@@ -1700,195 +1711,43 @@ export function ChristmasRsvpExperience({
                           )}
                         </div>
 
-                        {/* 4. CONDITIONAL PLAYER vs COACH & ATTENDANCE FIELDS */}
+                        {/* 4. COMPANION NAMES (WHEN ATTENDING) */}
                         <AnimatePresence mode="wait" initial={false}>
-                          {!isCoach ? (
+                          {attendanceStatus === "Attending" ? (
                             <motion.div
-                              key={`player-fields-${attendanceStatus}`}
+                              key={`companion-fields-${isCoach ? "coach" : "player"}`}
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -6 }}
                               transition={{ duration: 0.16 }}
-                              className="space-y-3 rounded-2xl border border-red-100 bg-red-50/35 p-3.5"
-                            >
-                              <div
-                                className={cn(
-                                  "grid grid-cols-1 gap-3",
-                                  attendanceStatus === "Attending" &&
-                                    "sm:grid-cols-2"
-                                )}
-                              >
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor="dialog-parent-name"
-                                    className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                  >
-                                    Parent / Guardian Name *
-                                  </label>
-                                  <input
-                                    id="dialog-parent-name"
-                                    type="text"
-                                    required={!isCoach}
-                                    value={parentName}
-                                    onChange={(e) => {
-                                      setParentName(e.target.value);
-                                      if (formError) setFormError(null);
-                                    }}
-                                    placeholder="e.g. Angelie Mauricio"
-                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                  />
-                                </div>
-
-                                {attendanceStatus === "Attending" && (
-                                  <div className="space-y-1">
-                                    <label
-                                      htmlFor="dialog-contact-player"
-                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                    >
-                                      Contact / Viber Number
-                                    </label>
-                                    <input
-                                      id="dialog-contact-player"
-                                      type="tel"
-                                      value={contactNumber}
-                                      onChange={(e) =>
-                                        setContactNumber(e.target.value)
-                                      }
-                                      placeholder="0917 XXX XXXX"
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-
-                              {attendanceStatus === "Attending" && (
-                                <div className="space-y-1">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <label
-                                      htmlFor="dialog-companions"
-                                      className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                    >
-                                      Companion Names{" "}
-                                      {companionCount > 0
-                                        ? `(${companionList.length}/${companionCount} guest${companionCount > 1 ? "s" : ""})`
-                                        : `(0 guests for ${playerCount} Pax)`}
-                                    </label>
-                                    <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-zinc-500">
-                                      {companionCount === 0
-                                        ? `Increase Pax above ${playerCount} to add companions`
-                                        : isCompanionLimitReached
-                                          ? `Max ${companionCount} companion${companionCount > 1 ? "s" : ""} reached`
-                                          : "Type a comma (,) to add badge"}
-                                    </span>
-                                  </div>
-
-                                  <div
-                                    onClick={() => {
-                                      if (!isCompanionLimitReached) {
-                                        companionInputRef.current?.focus();
-                                      }
-                                    }}
-                                    className={cn(
-                                      "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border border-red-200 bg-white px-2.5 py-1.5 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
-                                      companionCount === 0
-                                        ? "bg-zinc-100/80 border-zinc-200 cursor-not-allowed"
-                                        : isCompanionLimitReached
-                                          ? "cursor-default"
-                                          : "cursor-text"
-                                    )}
-                                  >
-                                    {companionList.map((name, idx) => (
-                                      <span
-                                        key={`${name}-${idx}`}
-                                        className="inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-primary shadow-2xs"
-                                      >
-                                        <span className="truncate">{name}</span>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeCompanionBadge(idx);
-                                          }}
-                                          aria-label={`Remove ${name}`}
-                                          className="ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-primary/70 transition hover:bg-red-200/70 hover:text-primary cursor-pointer"
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
-                                      </span>
-                                    ))}
-
-                                    {!isCompanionLimitReached ? (
-                                      <input
-                                        ref={companionInputRef}
-                                        id="dialog-companions"
-                                        type="text"
-                                        value={companionInput}
-                                        onChange={handleCompanionInputChange}
-                                        onKeyDown={handleCompanionKeyDown}
-                                        onBlur={handleCompanionBlur}
-                                        placeholder={
-                                          companionList.length === 0
-                                            ? "Type name + comma (e.g. Santa Claus, Rudolf)..."
-                                            : `Add ${companionCount - companionList.length} more companion${companionCount - companionList.length > 1 ? "s" : ""}...`
-                                        }
-                                        className="min-w-[140px] flex-1 bg-transparent px-1 py-0.5 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none"
-                                      />
-                                    ) : companionCount === 0 ? (
-                                      <span className="truncate whitespace-nowrap px-1 py-0.5 text-xs text-zinc-400">
-                                        {playerCount} Pax = {playerCount > 1 ? "Players" : "Player"} only (increase Pax to add companions)
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </div>
+                              className={cn(
+                                "space-y-2 rounded-2xl border p-3.5",
+                                isCoach
+                                  ? "border-emerald-200 bg-emerald-50/50"
+                                  : "border-red-100 bg-red-50/35"
                               )}
-                            </motion.div>
-                          ) : attendanceStatus === "Attending" ? (
-                            <motion.div
-                              key="coach-fields"
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -6 }}
-                              transition={{ duration: 0.16 }}
-                              className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3.5 space-y-3"
                             >
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <label
-                                    htmlFor="dialog-contact-coach"
-                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-800"
-                                  >
-                                    Coach Contact Number (Optional)
-                                  </label>
-                                  <span className="shrink-0 whitespace-nowrap text-[10px] font-semibold text-emerald-800">
-                                    Parent / Guardian omitted
-                                  </span>
-                                </div>
-                                <input
-                                  id="dialog-contact-coach"
-                                  type="tel"
-                                  value={contactNumber}
-                                  onChange={(e) =>
-                                    setContactNumber(e.target.value)
-                                  }
-                                  placeholder="0917 XXX XXXX"
-                                  className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                />
-                              </div>
-
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between gap-2">
                                   <label
                                     htmlFor="dialog-companions"
-                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-800"
+                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-700"
                                   >
-                                    Companion Names{" "}
+                                    4. Companion Names{" "}
                                     {companionCount > 0
                                       ? `(${companionList.length}/${companionCount} guest${companionCount > 1 ? "s" : ""})`
-                                      : "(0 guests for 1 Pax)"}
+                                      : `(0 guests for ${playerCount} Pax)`}
                                   </label>
-                                  <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-emerald-900/70">
+                                  <span
+                                    className={cn(
+                                      "shrink-0 whitespace-nowrap text-[10px] font-medium",
+                                      isCoach
+                                        ? "text-emerald-900/70"
+                                        : "text-zinc-500"
+                                    )}
+                                  >
                                     {companionCount === 0
-                                      ? "Increase Pax above 1 to add companions"
+                                      ? `Increase Pax above ${playerCount} to add companions`
                                       : isCompanionLimitReached
                                         ? `Max ${companionCount} companion${companionCount > 1 ? "s" : ""} reached`
                                         : "Type a comma (,) to add badge"}
@@ -1902,7 +1761,10 @@ export function ChristmasRsvpExperience({
                                     }
                                   }}
                                   className={cn(
-                                    "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-2.5 py-1.5 transition focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/20",
+                                    "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border bg-white px-2.5 py-1.5 transition",
+                                    isCoach
+                                      ? "border-emerald-200 focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/20"
+                                      : "border-red-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
                                     companionCount === 0
                                       ? "bg-zinc-100/80 border-zinc-200 cursor-not-allowed"
                                       : isCompanionLimitReached
@@ -1913,7 +1775,12 @@ export function ChristmasRsvpExperience({
                                   {companionList.map((name, idx) => (
                                     <span
                                       key={`${name}-${idx}`}
-                                      className="inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-900 shadow-2xs"
+                                      className={cn(
+                                        "inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs font-bold shadow-2xs",
+                                        isCoach
+                                          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                          : "border-red-200 bg-red-50 text-primary"
+                                      )}
                                     >
                                       <span className="truncate">{name}</span>
                                       <button
@@ -1923,7 +1790,12 @@ export function ChristmasRsvpExperience({
                                           removeCompanionBadge(idx);
                                         }}
                                         aria-label={`Remove ${name}`}
-                                        className="ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-emerald-800/70 transition hover:bg-emerald-200/70 hover:text-emerald-950 cursor-pointer"
+                                        className={cn(
+                                          "ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition cursor-pointer",
+                                          isCoach
+                                            ? "text-emerald-800/70 hover:bg-emerald-200/70 hover:text-emerald-950"
+                                            : "text-primary/70 hover:bg-red-200/70 hover:text-primary"
+                                        )}
                                       >
                                         <X className="h-3 w-3" />
                                       </button>
@@ -1948,7 +1820,9 @@ export function ChristmasRsvpExperience({
                                     />
                                   ) : companionCount === 0 ? (
                                     <span className="truncate whitespace-nowrap px-1 py-0.5 text-xs text-zinc-400">
-                                      1 Pax = Coach only (increase Pax to add companions)
+                                      {isCoach
+                                        ? "1 Pax = Coach only (increase Pax to add companions)"
+                                        : `${playerCount} Pax = ${playerCount > 1 ? "Players" : "Player"} only (increase Pax to add companions)`}
                                     </span>
                                   ) : null}
                                 </div>

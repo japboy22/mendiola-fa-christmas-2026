@@ -81,16 +81,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isCoach && !String(body.parentName || "").trim()) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Please enter the Parent / Guardian name.",
-        },
-        { status: 400 }
-      );
-    }
-
     const totalPax =
       attendanceStatus === "Attending"
         ? Math.max(1, Math.min(30, Number(body.totalPax) || 1))
@@ -102,9 +92,9 @@ export async function POST(request: NextRequest) {
         playerName,
         attendanceStatus,
         totalPax,
-        parentName: isCoach ? "" : body.parentName,
+        parentName: "",
         companionNames: body.companionNames,
-        contactNumber: body.contactNumber,
+        contactNumber: "",
       },
       body.appsScriptUrl
     );
