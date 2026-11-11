@@ -1,4 +1,4 @@
-export type PlayerAgeGroup = "U5" | "U7" | "U9" | "U13";
+export type PlayerAgeGroup = "U5" | "U7" | "U9" | "U13" | "U15";
 export type RoleOrAgeGroup = PlayerAgeGroup | "Coach";
 export type AttendanceStatus = "Attending" | "Not Attending";
 
@@ -34,6 +34,12 @@ export const ROLE_OR_AGE_GROUP_OPTIONS: {
     sublabel: "Senior Youth · Born 2013–2016",
   },
   {
+    value: "U15",
+    label: "U15 Division (Under 15)",
+    shortLabel: "U15",
+    sublabel: "Senior · Born 2011–2012",
+  },
+  {
     value: "Coach",
     label: "Coach / Coaching Staff",
     shortLabel: "Coach",
@@ -52,7 +58,6 @@ export interface ChristmasRsvpRecord {
   parentName: string;
   companionNames: string;
   contactNumber: string;
-  potluckNotes: string;
   syncedToSheet?: boolean;
 }
 

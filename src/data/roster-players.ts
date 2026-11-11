@@ -4,7 +4,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Ace Keiffer Nebran",
     "nickname": "Ace",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U18",
     "parentName": "Marilou M. Nebran",
     "contactNumber": "09945212686"
@@ -20,7 +20,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Adolf Dela Cruz",
     "nickname": "Adolf",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "0998197179",
     "contactNumber": "09988197179"
@@ -252,7 +252,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Elledric Josh Bernabe",
     "nickname": "Elled or Elledric",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Jhendie Maforie D Bernabe",
     "contactNumber": "09272570774"
@@ -284,7 +284,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Enzo Miguel Orbeta",
     "nickname": "Enzo",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Imee De Vera",
     "contactNumber": "09393492367"
@@ -468,7 +468,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "James Rayven Lacroa",
     "nickname": "Bembem",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Roy 'coach mcoy' espedido",
     "contactNumber": "09665474790"
@@ -484,7 +484,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Jay Mercado",
     "nickname": "Baldwin",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Roy \"coach mcoy\" espedido",
     "contactNumber": "09665474790"
@@ -492,7 +492,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Jaymark Villasis",
     "nickname": "Mark",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Josephine villasis",
     "contactNumber": "09263976178"
@@ -508,7 +508,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Jerryl Calatrava",
     "nickname": "Je",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U18",
     "parentName": "Reygen Bihag",
     "contactNumber": "09700926021"
@@ -516,7 +516,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Jev Bezalel Yodel Libre",
     "nickname": "Jev",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Elna Golez Libre",
     "contactNumber": "09430640696"
@@ -532,7 +532,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Jhoninna Mhaezhelle Pontejos",
     "nickname": "Jho",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U17",
     "parentName": "Maryan Pontejos",
     "contactNumber": "09759827178"
@@ -548,7 +548,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Johan Renzo San Juan",
     "nickname": "Johan",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Jen San Juan",
     "contactNumber": "09089883308"
@@ -580,7 +580,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "John Raizen Rey",
     "nickname": "Raizen",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Lilibeth Rey",
     "contactNumber": "09757616101"
@@ -636,7 +636,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Justine Ivan Concepcion",
     "nickname": "Ivan",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "09948947982",
     "contactNumber": "09948947982"
@@ -644,7 +644,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Kelsey Joshe Reyee",
     "nickname": "Joshe",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Sheila May Reyes",
     "contactNumber": "09397223540"
@@ -652,7 +652,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Kenzy Mangoma",
     "nickname": "Ken",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U17",
     "parentName": "09650422664",
     "contactNumber": "09650422664"
@@ -660,7 +660,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "King James Racaza",
     "nickname": "King",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "09610821163",
     "contactNumber": "09610821163"
@@ -700,7 +700,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Loraine Sindingan",
     "nickname": "Loraine",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Krishya Sindingan",
     "contactNumber": "09663717571"
@@ -732,7 +732,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Ma. Raquel Calatrava",
     "nickname": "Raquel",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Reygen",
     "contactNumber": "09700926021"
@@ -756,7 +756,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Maienard Sean Ivan Ibasco",
     "nickname": "Maienard",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Maylyn Ibasco",
     "contactNumber": "09951910730"
@@ -788,7 +788,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Maria Joana Alarcon",
     "nickname": "Jo",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Mercy Alarcon",
     "contactNumber": "0970 169 6538"
@@ -796,7 +796,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Mark Dylan Ramos",
     "nickname": "Dylan",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Maricel Ramos",
     "contactNumber": "09262570027"
@@ -804,7 +804,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Matthew Owen Gonzales",
     "nickname": "Owen",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Marlon B. Gonzales",
     "contactNumber": "09454253172"
@@ -820,7 +820,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Narcie Friah Lacuadra",
     "nickname": "Friah",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U17",
     "parentName": "Roselyn Alajas Bandoy",
     "contactNumber": "09562650019"
@@ -876,7 +876,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Paul Ferdinand DelaCruz",
     "nickname": "Ferdi",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U16",
     "parentName": "Angelita S. Dela Cruz",
     "contactNumber": "09770966926"
@@ -908,7 +908,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Prince Avila",
     "nickname": "Shao",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Maeshiel A. Avila",
     "contactNumber": "09197593850"
@@ -916,7 +916,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Princess Carlyle Lopez",
     "nickname": "Carlyle/Princess",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Lopez Princess/Eleazer lopez",
     "contactNumber": "9397459424"
@@ -964,7 +964,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Romina Sarmiento",
     "nickname": "Roms",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Normina M. Sarmiento",
     "contactNumber": "09058634424"
@@ -972,7 +972,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Rovie Gojo Cruz",
     "nickname": "Rov",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U17",
     "parentName": "Ronnel M.Gojo Cruz",
     "contactNumber": "09327084754"
@@ -980,7 +980,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Rupert Ray Bellosillo",
     "nickname": "Rupert",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U15",
     "parentName": "Melanie Santiago",
     "contactNumber": "09321998900"
@@ -988,7 +988,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Rushel Sarmiento",
     "nickname": "Gen",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Normina M. Sarmiento",
     "contactNumber": "09058634424"
@@ -996,7 +996,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Russel Shaun Fernandez",
     "nickname": "Russel",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U16",
     "parentName": "Jonathan Espino",
     "contactNumber": "09985824438"
@@ -1044,7 +1044,7 @@ export const ACADEMY_ROSTER_PLAYERS: AcademyRosterPlayer[] = [
   {
     "fullName": "Urijah Heath Dormitorio",
     "nickname": "Uri",
-    "division": "U13",
+    "division": "U15",
     "rawAgeGroup": "U14",
     "parentName": "Ken Dormitorio",
     "contactNumber": "09267330838"

@@ -24,6 +24,7 @@ import {
   ROLE_OR_AGE_GROUP_OPTIONS,
   type AttendanceStatus,
   type ChristmasRsvpRecord,
+  type PlayerAgeGroup,
   type RoleOrAgeGroup,
   type RsvpSummaryStats,
 } from "@/types/rsvp";
@@ -105,18 +106,181 @@ export function ChristmasRsvpExperience({
   const [roleOrAgeGroup, setRoleOrAgeGroup] =
     React.useState<RoleOrAgeGroup>("U5");
   const [playerName, setPlayerName] = React.useState("");
+  const [siblings, setSiblings] = React.useState<
+    { id: string; ageGroup: PlayerAgeGroup; name: string }[]
+  >([]);
   const [attendanceStatus, setAttendanceStatus] =
     React.useState<AttendanceStatus>("Attending");
   const [totalPax, setTotalPax] = React.useState<number>(2);
   const [parentName, setParentName] = React.useState("");
-  const [companionNames, setCompanionNames] = React.useState("");
+  const [companionList, setCompanionList] = React.useState<string[]>([]);
+  const [companionInput, setCompanionInput] = React.useState("");
   const [contactNumber, setContactNumber] = React.useState("");
-  const [potluckNotes, setPotluckNotes] = React.useState("");
+  const companionInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const isCoach = roleOrAgeGroup === "Coach";
+  const playerCount = isCoach ? 1 : 1 + siblings.length;
+  const minAttendingPax = playerCount;
+  const maxCompanions =
+    attendanceStatus === "Attending"
+      ? Math.max(0, totalPax - playerCount)
+      : 0;
+  const isCompanionLimitReached = companionList.length >= maxCompanions;
+
+  const addSiblingPlayer = () => {
+    const defaultAgeGroup: PlayerAgeGroup =
+      roleOrAgeGroup === "Coach" ? "U5" : roleOrAgeGroup;
+    setSiblings((prev) => [
+      ...prev,
+      {
+        id: `sib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        ageGroup: defaultAgeGroup,
+        name: "",
+      },
+    ]);
+    if (attendanceStatus === "Attending") {
+      setTotalPax((prev) => Math.min(30, prev + 1));
+    }
+    if (formError) setFormError(null);
+  };
+
+  const updateSiblingPlayer = (
+    id: string,
+    patch: Partial<{ ageGroup: PlayerAgeGroup; name: string }>
+  ) => {
+    setSiblings((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
+    );
+    if (formError) setFormError(null);
+  };
+
+  const removeSiblingPlayer = (id: string) => {
+    const nextMinPax = Math.max(1, siblings.length);
+    setSiblings((prev) => prev.filter((s) => s.id !== id));
+    if (attendanceStatus === "Attending") {
+      setTotalPax((prev) => Math.max(nextMinPax, prev - 1));
+    }
+    if (formError) setFormError(null);
+  };
+
+  const updateTotalPax = React.useCallback(
+    (nextPax: number, nextPlayerCount = playerCount) => {
+      const clampedPax = Math.max(nextPlayerCount, Math.min(30, nextPax));
+      const nextMaxCompanions = Math.max(0, clampedPax - nextPlayerCount);
+      setTotalPax(clampedPax);
+      setCompanionList((prev) => {
+        const sliced =
+          prev.length > nextMaxCompanions
+            ? prev.slice(0, nextMaxCompanions)
+            : prev;
+        if (sliced.length >= nextMaxCompanions) {
+          setCompanionInput("");
+        }
+        return sliced;
+      });
+    },
+    [playerCount]
+  );
+
+  const addCompanionBadges = React.useCallback(
+    (rawNames: string[]) => {
+      const cleaned = rawNames
+        .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
+        .filter(Boolean);
+      if (cleaned.length === 0) return;
+      setCompanionList((prev) => {
+        const remainingSlots = Math.max(0, maxCompanions - prev.length);
+        if (remainingSlots <= 0) return prev;
+        return [...prev, ...cleaned.slice(0, remainingSlots)];
+      });
+    },
+    [maxCompanions]
+  );
+
+  const removeCompanionBadge = React.useCallback((indexToRemove: number) => {
+    setCompanionList((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  }, []);
+
+  const handleCompanionInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (companionList.length >= maxCompanions) {
+      setCompanionInput("");
+      return;
+    }
+
+    const val = e.target.value;
+
+    // Split into badge(s) when typing a comma "," or period "." (unless it's a short prefix/initial like "Ma." or "J.")
+    if (val.includes(",")) {
+      const parts = val.split(",");
+      const remainder = parts.pop() ?? "";
+      const remainingSlots = Math.max(
+        0,
+        maxCompanions - companionList.length
+      );
+      const accepted = parts
+        .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
+        .filter(Boolean)
+        .slice(0, remainingSlots);
+      addCompanionBadges(accepted);
+      setCompanionInput(
+        companionList.length + accepted.length >= maxCompanions ? "" : remainder
+      );
+      return;
+    }
+
+    if (val.endsWith(".")) {
+      const candidate = val.slice(0, -1).trim();
+      const lower = candidate.toLowerCase();
+      const isPrefixOrInitial =
+        candidate.length <= 1 ||
+        ["ma", "mr", "ms", "mrs", "dr", "jr", "sr", "st"].includes(lower);
+      if (candidate && !isPrefixOrInitial) {
+        addCompanionBadges([candidate]);
+        setCompanionInput("");
+        return;
+      }
+    }
+
+    setCompanionInput(val);
+  };
+
+  const handleCompanionKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      if (companionInput.trim() && companionList.length < maxCompanions) {
+        addCompanionBadges([companionInput]);
+        setCompanionInput("");
+      }
+    } else if (
+      e.key === "Backspace" &&
+      companionInput === "" &&
+      companionList.length > 0
+    ) {
+      e.preventDefault();
+      setCompanionList((prev) => prev.slice(0, -1));
+    }
+  };
+
+  const handleCompanionBlur = () => {
+    if (companionInput.trim() && companionList.length < maxCompanions) {
+      addCompanionBadges(companionInput.split(","));
+      setCompanionInput("");
+    } else if (companionList.length >= maxCompanions) {
+      setCompanionInput("");
+    }
+  };
 
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submittedRecord, setSubmittedRecord] =
     React.useState<ChristmasRsvpRecord | null>(null);
+  const [submittedSiblings, setSubmittedSiblings] = React.useState<
+    ChristmasRsvpRecord[]
+  >([]);
 
   // Roster filter state
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
@@ -124,22 +288,16 @@ export function ChristmasRsvpExperience({
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const countdown = useEventCountdown(EVENT_DETAILS.isoStart);
-  const isCoach = roleOrAgeGroup === "Coach";
 
   const handleSelectRoleOrAgeGroup = (nextRole: RoleOrAgeGroup) => {
     setRoleOrAgeGroup(nextRole);
     setFormError(null);
     if (nextRole === "Coach") {
       setParentName("");
-      setCompanionNames("");
-      setPotluckNotes("");
-      if (attendanceStatus === "Attending" && totalPax > 1) {
-        setTotalPax(1);
-      }
-    } else {
-      if (attendanceStatus === "Attending" && totalPax < 1) {
-        setTotalPax(2);
-      }
+      setSiblings([]);
+    }
+    if (attendanceStatus === "Attending" && totalPax < 1) {
+      setTotalPax(2);
     }
   };
 
@@ -148,6 +306,7 @@ export function ChristmasRsvpExperience({
       handleSelectRoleOrAgeGroup(grp);
     }
     setSubmittedRecord(null);
+    setSubmittedSiblings([]);
     setFormError(null);
     setIsRsvpDialogOpen(true);
   };
@@ -188,19 +347,60 @@ export function ChristmasRsvpExperience({
       return;
     }
 
+    if (!isCoach) {
+      for (let i = 0; i < siblings.length; i++) {
+        if (!siblings[i].name.trim()) {
+          setFormError(
+            `Please enter the full name for Sibling Player #${i + 1}.`
+          );
+          return;
+        }
+      }
+    }
+
     if (!isCoach && !parentName.trim()) {
       setFormError("Please enter the Parent / Guardian name.");
       return;
     }
 
-    if (attendanceStatus === "Attending" && (!totalPax || totalPax < 1)) {
-      setFormError("Please enter a valid number of pax (at least 1).");
+    if (
+      attendanceStatus === "Attending" &&
+      (!totalPax || totalPax < minAttendingPax)
+    ) {
+      setFormError(
+        `Please enter a valid number of pax (at least ${minAttendingPax} for ${playerCount} player${playerCount > 1 ? "s" : ""}).`
+      );
       return;
     }
 
     setIsSubmitting(true);
 
     const isAttending = attendanceStatus === "Attending";
+    const remainingSlots = Math.max(0, maxCompanions - companionList.length);
+    const pendingCompanions = companionInput
+      .split(",")
+      .map((n) => n.replace(/^[,.]+|[,.]+$/g, "").trim())
+      .filter(Boolean)
+      .slice(0, remainingSlots);
+    const finalCompanionList = [
+      ...companionList.slice(0, maxCompanions),
+      ...pendingCompanions,
+    ];
+    const mergedCompanions = finalCompanionList.join(", ");
+    if (pendingCompanions.length > 0) {
+      setCompanionList(finalCompanionList);
+      setCompanionInput("");
+    }
+
+    const activeSiblings = !isCoach
+      ? siblings
+          .map((s) => ({ ageGroup: s.ageGroup, name: s.name.trim() }))
+          .filter((s) => Boolean(s.name))
+      : [];
+
+    const primaryPax = isAttending
+      ? Math.max(1, totalPax - activeSiblings.length)
+      : 0;
 
     try {
       const res = await fetch("/api/rsvp", {
@@ -210,15 +410,14 @@ export function ChristmasRsvpExperience({
           roleOrAgeGroup,
           playerName: trimmedName,
           attendanceStatus,
-          totalPax: isAttending ? totalPax : 0,
+          totalPax: primaryPax,
           parentName: isCoach ? "" : parentName.trim(),
-          companionNames: !isCoach && isAttending ? companionNames.trim() : "",
+          companionNames: isAttending ? mergedCompanions : "",
           contactNumber: isAttending ? contactNumber.trim() : "",
-          potluckNotes: !isCoach && isAttending ? potluckNotes.trim() : "",
         }),
       });
 
-      const data = (await res.json()) as {
+      let data = (await res.json()) as {
         ok: boolean;
         error?: string;
         record?: ChristmasRsvpRecord;
@@ -234,20 +433,52 @@ export function ChristmasRsvpExperience({
         return;
       }
 
+      const primaryRecord = data.record;
+      const savedSiblingRecords: ChristmasRsvpRecord[] = [];
+
+      for (const sib of activeSiblings) {
+        const sibRes = await fetch("/api/rsvp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roleOrAgeGroup: sib.ageGroup,
+            playerName: sib.name,
+            attendanceStatus,
+            totalPax: isAttending ? 1 : 0,
+            parentName: parentName.trim(),
+            companionNames: isAttending
+              ? `Sibling of ${trimmedName} (${roleOrAgeGroup})`
+              : "",
+            contactNumber: isAttending ? contactNumber.trim() : "",
+          }),
+        });
+        const sibData = (await sibRes.json()) as {
+          ok: boolean;
+          record?: ChristmasRsvpRecord;
+          records?: ChristmasRsvpRecord[];
+          stats?: RsvpSummaryStats;
+        };
+        if (sibRes.ok && sibData.ok && sibData.record) {
+          savedSiblingRecords.push(sibData.record);
+          data = { ...data, records: sibData.records, stats: sibData.stats };
+        }
+      }
+
       if (data.records) setRecords(data.records);
       if (data.stats) setStats(data.stats);
 
       try {
         const raw = localStorage.getItem(LOCAL_CACHE_KEY);
         const existing: ChristmasRsvpRecord[] = raw ? JSON.parse(raw) : [];
+        const newEntries = [primaryRecord, ...savedSiblingRecords];
         const updated = [
-          data.record,
+          ...newEntries,
           ...existing.filter(
             (r) =>
-              !(
-                r.roleOrAgeGroup === data.record!.roleOrAgeGroup &&
-                r.playerName.toLowerCase() ===
-                  data.record!.playerName.toLowerCase()
+              !newEntries.some(
+                (ne) =>
+                  ne.roleOrAgeGroup === r.roleOrAgeGroup &&
+                  ne.playerName.toLowerCase() === r.playerName.toLowerCase()
               )
           ),
         ];
@@ -256,7 +487,11 @@ export function ChristmasRsvpExperience({
         // Ignore storage error
       }
 
-      setSubmittedRecord(data.record);
+      setSubmittedSiblings(savedSiblingRecords);
+      setSubmittedRecord({
+        ...primaryRecord,
+        totalPax: isAttending ? totalPax : 0,
+      });
       setIsSubmitting(false);
     } catch {
       setFormError(
@@ -281,7 +516,6 @@ export function ChristmasRsvpExperience({
           r.roleOrAgeGroup,
           r.parentName,
           r.companionNames,
-          r.potluckNotes,
           r.contactNumber,
         ]
           .join(" ")
@@ -292,28 +526,25 @@ export function ChristmasRsvpExperience({
     });
   }, [records, groupFilter, statusFilter, searchQuery]);
 
-  const companionCount =
-    !isCoach && attendanceStatus === "Attending"
-      ? Math.max(0, totalPax - 1)
-      : 0;
+  const companionCount = maxCompanions;
 
   return (
-    <div className="relative min-h-[100dvh] flex flex-col bg-gradient-to-b from-[#FFF7F6] via-[#FDFBFB] to-[#FFF5F5] text-zinc-950 pb-24">
+    <div className="relative min-h-[100dvh] flex flex-col bg-zinc-50/70 text-zinc-950 pb-24">
       {/* Subtle Ambient Snowfall Background */}
       <ChristmasSnowfall />
 
-      {/* Festive Candy-Cane Top Ribbon */}
-      <div className="mfc-candy-cane-bar relative z-30 h-2 w-full shadow-2xs" />
+      {/* Subtle Top Accent Line */}
+      <div className="relative z-30 h-1 w-full bg-zinc-200" />
 
-      {/* Clean Christmas Sticky Header */}
-      <header className="sticky top-0 z-30 h-16 border-b border-red-200/70 bg-white/90 backdrop-blur-md shadow-[0_4px_20px_rgba(217,27,35,0.05)]">
+      {/* Clean Neutral Sticky Header */}
+      <header className="sticky top-0 z-30 h-16 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-2 px-3.5 sm:px-6">
           <button
             type="button"
             onClick={() => setActiveTab("pass")}
             className="flex min-w-0 items-center gap-2.5 text-left group cursor-pointer"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white p-1 shadow-2xs transition-transform duration-200 group-hover:scale-105">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white p-1 shadow-2xs transition-transform duration-200 group-hover:scale-105">
               <Image
                 src="/mendiola-logo.png"
                 alt="Mendiola Football Academy - Bulacan Logo"
@@ -329,11 +560,11 @@ export function ChristmasRsvpExperience({
                 <span className="truncate text-sm font-extrabold tracking-tight text-zinc-950 sm:text-base">
                   Mendiola FA Bulacan
                 </span>
-                <span className="hidden rounded-full bg-red-50 border border-red-200 px-2 py-0.5 font-mono text-[10px] font-extrabold text-primary sm:inline-block">
+                <span className="hidden shrink-0 whitespace-nowrap rounded-full bg-zinc-100 border border-zinc-200 px-2 py-0.5 font-mono text-[10px] font-bold text-zinc-600 sm:inline-block">
                   XMAS 2026
                 </span>
               </div>
-              <p className="truncate text-[11px] font-medium text-zinc-600">
+              <p className="truncate text-[11px] font-medium text-zinc-500">
                 Dec 15, 2026 · 3:00 PM · Valle Maria Mar
               </p>
             </div>
@@ -342,9 +573,9 @@ export function ChristmasRsvpExperience({
           <button
             type="button"
             onClick={() => openRsvpForGroup()}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D91B23] to-[#B5121B] px-3.5 py-2 text-xs font-extrabold text-white shadow-sm shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+            className="shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-zinc-200 bg-zinc-100 px-3.5 py-2 text-xs font-bold text-zinc-800 transition hover:bg-zinc-200/80 active:scale-[0.98] cursor-pointer"
           >
-            <span>RSVP Now</span>
+            <span>RSVP</span>
           </button>
         </div>
       </header>
@@ -353,22 +584,83 @@ export function ChristmasRsvpExperience({
       <main className="relative z-20 mx-auto w-full max-w-6xl flex-1 px-3.5 py-4 sm:px-6 sm:py-8">
         {activeTab === "pass" ? (
           <div className="space-y-5 sm:space-y-7">
-            {/* FESTIVE CHRISTMAS INVITATION HERO CARD */}
-            <section className="overflow-hidden rounded-3xl border-2 border-red-200/90 bg-white/95 shadow-[0_18px_50px_rgba(185,20,28,0.10)] backdrop-blur-xs">
-              {/* Crimson & Gold Christmas Banner */}
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#A50D16] via-[#D91B23] to-[#7C0910] px-4 py-6 text-white sm:px-8 sm:py-9">
+            {/* OPTION A + STUDY 3: NEUTRAL CANVAS HERO WITH HANGING ORNAMENTS, BOKEH & PINE HORIZON */}
+            <section className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-sm">
+              {/* Calm Neutral Hero Header with Study 3 Graphic Framing */}
+              <div className="relative overflow-hidden px-4 py-6 sm:px-8 sm:py-9">
+                {/* Study 3: Soft Bokeh Light Circles + Hanging Ornaments + Bottom Pine Silhouette */}
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 overflow-hidden"
                 >
-                  <div className="absolute -top-16 right-8 h-56 w-56 rounded-full bg-amber-400/15 blur-3xl" />
-                  <div className="absolute -bottom-16 left-10 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+                  {/* Soft bokeh circles */}
+                  <div className="absolute -top-10 left-[18%] h-36 w-36 rounded-full bg-red-100/40 blur-2xl" />
+                  <div className="absolute top-4 right-[22%] h-32 w-32 rounded-full bg-amber-100/45 blur-2xl" />
+                  <div className="absolute bottom-2 left-[45%] h-28 w-28 rounded-full bg-red-50/60 blur-xl" />
+
+                  {/* Top-left hanging line-art ornaments */}
+                  <svg
+                    className="absolute top-0 left-4 sm:left-10 h-16 w-28 text-zinc-300/75"
+                    viewBox="0 0 110 68"
+                    fill="none"
+                  >
+                    <line x1="18" y1="0" x2="18" y2="24" stroke="currentColor" strokeWidth="1.2" />
+                    <circle cx="18" cy="33" r="8" stroke="currentColor" strokeWidth="1.4" />
+                    <line x1="52" y1="0" x2="52" y2="14" stroke="currentColor" strokeWidth="1.2" />
+                    <polygon
+                      points="52,15 55,21 62,22 57,26.5 58,33 52,29.5 46,33 47,26.5 42,22 49,21"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                    />
+                    <line x1="86" y1="0" x2="86" y2="30" stroke="currentColor" strokeWidth="1.1" strokeDasharray="2 2" />
+                    <circle cx="86" cy="36" r="5.5" stroke="currentColor" strokeWidth="1.3" />
+                  </svg>
+
+                  {/* Top-right hanging line-art ornaments */}
+                  <svg
+                    className="absolute top-0 right-4 sm:right-10 h-16 w-28 text-zinc-300/75"
+                    viewBox="0 0 110 68"
+                    fill="none"
+                  >
+                    <line x1="26" y1="0" x2="26" y2="18" stroke="currentColor" strokeWidth="1.2" />
+                    <polygon points="26,18 33,28 26,38 19,28" stroke="currentColor" strokeWidth="1.3" />
+                    <line x1="62" y1="0" x2="62" y2="28" stroke="currentColor" strokeWidth="1.2" />
+                    <circle cx="62" cy="37" r="8.5" stroke="currentColor" strokeWidth="1.4" />
+                    <line x1="92" y1="0" x2="92" y2="14" stroke="currentColor" strokeWidth="1.2" />
+                    <polygon
+                      points="92,15 94.5,20 100,21 96,25 97,30.5 92,27.5 87,30.5 88,25 84,21 89.5,20"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
+
+                  {/* Bottom pine silhouette horizon inside hero */}
+                  <svg
+                    className="absolute bottom-0 inset-x-0 h-8 w-full text-zinc-200/65"
+                    viewBox="0 0 800 32"
+                    preserveAspectRatio="none"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M0 32 L0 25 Q200 16 400 24 T800 22 L800 32 Z"
+                      className="text-zinc-100"
+                      fill="currentColor"
+                    />
+                    <polygon points="18,32 30,8 42,32" />
+                    <polygon points="38,32 48,14 58,32" />
+                    <polygon points="62,32 70,18 78,32" />
+                    <polygon points="120,32 132,10 144,32" />
+                    <polygon points="650,32 662,12 674,32" />
+                    <polygon points="718,32 728,16 738,32" />
+                    <polygon points="734,32 748,6 762,32" />
+                    <polygon points="758,32 770,13 782,32" />
+                  </svg>
                 </div>
 
                 <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   {/* Official Crest + Title */}
                   <div className="flex items-center gap-3.5 sm:gap-5">
-                    <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-3xl border-2 border-amber-300/90 bg-white p-2 shadow-2xl ring-4 ring-white/15">
+                    <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-3xl border border-zinc-200 bg-zinc-50/70 p-2 shadow-xs">
                       <Image
                         src="/mendiola-logo.png"
                         alt="Mendiola Football Club 1991 Official Crest"
@@ -381,48 +673,48 @@ export function ChristmasRsvpExperience({
                     </div>
 
                     <div className="min-w-0">
-                      <div className="inline-flex items-center rounded-full border border-amber-300/40 bg-black/20 px-3 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-xs">
+                      <div className="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-100 px-3 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-600">
                         Season&apos;s Greetings · Est. 1991
                       </div>
 
-                      <h1 className="mt-1.5 text-xl font-extrabold tracking-tight text-white sm:text-3xl leading-tight">
+                      <h1 className="mt-1.5 text-xl font-extrabold tracking-tight text-zinc-950 sm:text-3xl leading-tight">
                         Mendiola Football Academy - Bulacan
                       </h1>
 
-                      <p className="mt-1 text-xs font-semibold text-red-100 sm:text-sm">
+                      <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">
                         Christmas Party 2026 · Attendance Confirmation
                       </p>
                     </div>
                   </div>
 
-                  {/* Holiday Countdown + Primary RSVP Action */}
+                  {/* Muted Countdown + Emphasized Primary RSVP Action */}
                   <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-                    <div className="rounded-2xl border border-amber-200/30 bg-black/25 px-3.5 py-2.5 backdrop-blur-xs sm:min-w-[240px]">
-                      <div className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-amber-200">
+                    <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-2.5 sm:min-w-[240px]">
+                      <div className="mb-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
                         Christmas Party Countdown
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-xl bg-white/10 py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-white sm:text-xl">
+                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
+                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
                             {countdown.days}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-red-100">
+                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
                             Days
                           </div>
                         </div>
-                        <div className="rounded-xl bg-white/10 py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-white sm:text-xl">
+                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
+                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
                             {countdown.hours}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-red-100">
+                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
                             Hours
                           </div>
                         </div>
-                        <div className="rounded-xl bg-white/10 py-1 text-center">
-                          <div className="font-mono text-lg font-extrabold text-white sm:text-xl">
+                        <div className="rounded-xl border border-zinc-200/80 bg-white py-1 text-center">
+                          <div className="font-mono text-lg font-extrabold text-zinc-900 sm:text-xl">
                             {countdown.minutes}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-red-100">
+                          <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
                             Mins
                           </div>
                         </div>
@@ -432,24 +724,24 @@ export function ChristmasRsvpExperience({
                     <button
                       type="button"
                       onClick={() => openRsvpForGroup()}
-                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-amber-200 bg-white px-5 text-sm font-extrabold text-primary shadow-xl transition hover:bg-red-50 active:scale-[0.98] sm:w-auto cursor-pointer"
+                      className="inline-flex h-13 w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B5121B] px-6 text-sm font-extrabold text-white shadow-lg shadow-red-600/30 ring-4 ring-red-500/15 transition hover:brightness-110 active:scale-[0.98] sm:w-auto cursor-pointer"
                     >
-                      <Gift className="h-4 w-4 text-primary" />
+                      <Gift className="h-4 w-4 shrink-0 text-white" />
                       <span>Confirm Attendance Now</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Festive Garland Divider */}
-              <div className="h-1.5 w-full bg-gradient-to-r from-emerald-700 via-amber-400 to-primary" />
+              {/* Subtle Neutral Divider */}
+              <div className="h-px w-full bg-zinc-200/80" />
 
-              {/* Event Key Info Grid (One Clean Icon per Section) */}
-              <div className="grid grid-cols-1 divide-y divide-red-100/80 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+              {/* Event Key Info Grid (Unified Muted Neutral Icons & Controls) */}
+              <div className="grid grid-cols-1 divide-y divide-zinc-200/70 bg-zinc-50/40 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                 {/* 1. Date & Time */}
-                <div className="flex items-start justify-between gap-3 p-4 sm:p-5 bg-gradient-to-b from-white to-red-50/20">
+                <div className="flex items-start justify-between gap-3 p-4 sm:p-5">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-primary">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-600">
                       <Calendar className="h-5 w-5" />
                     </div>
                     <div>
@@ -459,7 +751,7 @@ export function ChristmasRsvpExperience({
                       <div className="mt-0.5 text-sm font-extrabold text-zinc-950 sm:text-base">
                         December 15, 2026
                       </div>
-                      <div className="mt-0.5 text-xs font-bold text-primary">
+                      <div className="mt-0.5 text-xs font-semibold text-zinc-600">
                         Tuesday · 3:00 PM
                       </div>
                     </div>
@@ -467,16 +759,16 @@ export function ChristmasRsvpExperience({
                   <button
                     type="button"
                     onClick={downloadCalendarIcs}
-                    className="shrink-0 rounded-xl border border-red-200 bg-red-50/60 px-2.5 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
+                    className="shrink-0 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-700 transition hover:bg-zinc-100 cursor-pointer"
                   >
                     + Save Date
                   </button>
                 </div>
 
                 {/* 2. Venue & Map Directions */}
-                <div className="p-4 sm:p-5 space-y-3 bg-gradient-to-b from-white to-red-50/20">
+                <div className="p-4 sm:p-5 space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-600">
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -486,7 +778,7 @@ export function ChristmasRsvpExperience({
                       <div className="mt-0.5 text-sm font-extrabold text-zinc-950 sm:text-base">
                         Valle Maria Mar
                       </div>
-                      <div className="text-xs font-medium text-zinc-600">
+                      <div className="text-xs font-medium text-zinc-500">
                         Sta. Cruz, Sta. Maria, Bulacan
                       </div>
                     </div>
@@ -497,7 +789,7 @@ export function ChristmasRsvpExperience({
                       href={EVENT_DETAILS.googleMapsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-700 shadow-2xs transition hover:bg-zinc-100"
                     >
                       Open Google Maps
                     </a>
@@ -505,7 +797,7 @@ export function ChristmasRsvpExperience({
                       href={EVENT_DETAILS.wazeUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 py-2 text-xs font-bold text-zinc-800 shadow-2xs transition hover:border-primary hover:bg-red-50/40"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-700 shadow-2xs transition hover:bg-zinc-100"
                     >
                       Navigate via Waze
                     </a>
@@ -513,19 +805,19 @@ export function ChristmasRsvpExperience({
                 </div>
 
                 {/* 3. Red & White Christmas Motif */}
-                <div className="flex items-center justify-between gap-3 p-4 sm:p-5 bg-gradient-to-br from-red-50/70 via-white to-amber-50/40">
+                <div className="flex items-center justify-between gap-3 p-4 sm:p-5">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D91B23] to-[#9E0B14] text-amber-200 shadow-2xs">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-600">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                         Holiday Dress Code
                       </div>
                       <div className="mt-0.5 text-sm font-extrabold text-zinc-950 sm:text-base">
                         Red and White Motif
                       </div>
-                      <div className="text-xs font-medium text-zinc-600">
+                      <div className="text-xs font-medium text-zinc-500">
                         Festive Christmas Red &amp; Snow White
                       </div>
                     </div>
@@ -533,11 +825,11 @@ export function ChristmasRsvpExperience({
                   <div className="flex shrink-0 items-center -space-x-2">
                     <span
                       title="Christmas Red (#D91B23)"
-                      className="h-8 w-8 rounded-full bg-[#D91B23] ring-2 ring-white shadow-sm"
+                      className="relative z-10 h-7 w-7 rounded-full bg-[#D91B23]/85 ring-2 ring-white shadow-2xs"
                     />
                     <span
                       title="Snow White (#FFFFFF)"
-                      className="h-8 w-8 rounded-full bg-white ring-2 ring-red-200 shadow-sm"
+                      className="relative z-0 h-7 w-7 rounded-full bg-white ring-2 ring-zinc-200 shadow-2xs"
                     />
                   </div>
                 </div>
@@ -545,7 +837,7 @@ export function ChristmasRsvpExperience({
             </section>
 
             {/* RECENT CONFIRMED HOLIDAY GUESTS PREVIEW */}
-            <section className="rounded-3xl border border-red-200/80 bg-white/90 p-4 sm:p-6 shadow-xs backdrop-blur-xs space-y-3.5">
+            <section className="rounded-3xl border border-zinc-200/90 bg-white p-4 sm:p-6 shadow-2xs space-y-3.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <h2 className="text-base font-extrabold text-zinc-950">
@@ -558,21 +850,23 @@ export function ChristmasRsvpExperience({
                 <button
                   type="button"
                   onClick={() => setActiveTab("roster")}
-                  className="inline-flex items-center rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
+                  className="shrink-0 inline-flex items-center whitespace-nowrap rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700 transition hover:bg-zinc-100 cursor-pointer"
                 >
                   See All ({records.length})
                 </button>
               </div>
 
               {records.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-red-200 bg-gradient-to-b from-red-50/40 to-white p-7 text-center">
+                <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 p-7 text-center">
                   <p className="text-sm font-extrabold text-zinc-900">
                     Be the First to Confirm for Christmas Party 2026!
                   </p>
                   <p className="mt-1 text-xs font-medium text-zinc-500">
                     Tap{" "}
-                    <strong className="text-primary">Confirm RSVP</strong>{" "}
-                    below to register your player or coach attendance.
+                    <strong className="text-primary">
+                      Confirm Attendance Now
+                    </strong>{" "}
+                    above to register your player or coach attendance.
                   </p>
                 </div>
               ) : (
@@ -582,18 +876,11 @@ export function ChristmasRsvpExperience({
                     return (
                       <div
                         key={rec.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-red-100 bg-gradient-to-r from-red-50/40 via-white to-red-50/20 p-3.5 shadow-2xs"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-50/50 p-3.5"
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span
-                              className={cn(
-                                "rounded-md px-2 py-0.5 font-mono text-[10px] font-bold",
-                                isRecCoach
-                                  ? "bg-emerald-800 text-white"
-                                  : "bg-primary text-white"
-                              )}
-                            >
+                            <span className="shrink-0 whitespace-nowrap rounded-md border border-zinc-200 bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-zinc-700">
                               {rec.roleOrAgeGroup}
                             </span>
                             <span className="truncate text-sm font-extrabold text-zinc-950">
@@ -608,11 +895,11 @@ export function ChristmasRsvpExperience({
                         </div>
                         <div className="shrink-0 text-right">
                           {rec.attendanceStatus === "Attending" ? (
-                            <span className="inline-flex items-center rounded-xl bg-white border border-red-200 px-2.5 py-1 font-mono text-xs font-extrabold text-primary shadow-2xs">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-xl bg-white border border-zinc-200 px-2.5 py-1 font-mono text-xs font-bold text-zinc-800">
                               {rec.totalPax} Pax
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-xl bg-zinc-100 border border-zinc-200 px-2.5 py-1 text-xs font-bold text-zinc-600">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-xl bg-zinc-100 border border-zinc-200 px-2.5 py-1 text-xs font-bold text-zinc-500">
                               Not Attending
                             </span>
                           )}
@@ -627,14 +914,14 @@ export function ChristmasRsvpExperience({
         ) : (
           /* TAB 2: CONFIRMED ATTENDANCE ROSTER & HEADCOUNT */
           <div className="space-y-4 sm:space-y-6">
-            {/* Festive Mobile-First Summary Strip */}
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-              <div className="col-span-2 sm:col-span-1 rounded-2xl border border-red-300 bg-gradient-to-br from-[#D91B23] to-[#9E0B14] p-3.5 text-white shadow-sm flex sm:block items-center justify-between">
+            {/* Neutral Mobile-First Summary Strip */}
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-7">
+              <div className="col-span-2 sm:col-span-2 lg:col-span-1 rounded-2xl border border-zinc-200 bg-zinc-900 p-3.5 text-white shadow-2xs flex sm:block items-center justify-between">
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-200">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                     Total Party Pax
                   </div>
-                  <div className="text-xs text-red-100">
+                  <div className="text-xs text-zinc-300">
                     {stats.attendingCount} confirmed entries
                   </div>
                 </div>
@@ -643,49 +930,49 @@ export function ChristmasRsvpExperience({
                 </div>
               </div>
 
-              {(["U5", "U7", "U9", "U13", "Coach"] as RoleOrAgeGroup[]).map(
-                (grp) => {
-                  const b = stats.byGroup[grp] ?? {
-                    entries: 0,
-                    attendingEntries: 0,
-                    pax: 0,
-                  };
-                  return (
-                    <div
-                      key={grp}
-                      className="rounded-2xl border border-red-100 bg-white/95 p-3.5 shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold uppercase text-zinc-700">
-                          {grp === "Coach" ? "Coaches" : grp}
-                        </span>
-                        <span className="rounded-full bg-red-50 border border-red-200 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
-                          {b.attendingEntries} going
-                        </span>
-                      </div>
-                      <div className="mt-1 font-mono text-xl font-extrabold text-zinc-950">
-                        {b.pax}{" "}
-                        <span className="text-xs font-semibold text-zinc-500">
-                          Pax
-                        </span>
-                      </div>
+              {(
+                ["U5", "U7", "U9", "U13", "U15", "Coach"] as RoleOrAgeGroup[]
+              ).map((grp) => {
+                const b = stats.byGroup[grp] ?? {
+                  entries: 0,
+                  attendingEntries: 0,
+                  pax: 0,
+                };
+                return (
+                  <div
+                    key={grp}
+                    className="rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="text-xs font-extrabold uppercase text-zinc-700 whitespace-nowrap">
+                        {grp === "Coach" ? "Coaches" : grp}
+                      </span>
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-zinc-100 border border-zinc-200 px-2 py-0.5 font-mono text-[10px] font-bold text-zinc-600">
+                        {b.attendingEntries} going
+                      </span>
                     </div>
-                  );
-                }
-              )}
+                    <div className="mt-1 font-mono text-xl font-extrabold text-zinc-950">
+                      {b.pax}{" "}
+                      <span className="text-xs font-semibold text-zinc-500">
+                        Pax
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="rounded-2xl border border-red-200/80 bg-white/95 p-3.5 sm:p-4 shadow-2xs space-y-2.5 sm:space-y-0">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5 sm:space-y-0">
               <div className="grid grid-cols-1 gap-2.5 md:grid-cols-12 items-center">
                 <div className="relative md:col-span-5">
-                  <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-primary/70" />
+                  <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-zinc-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search player, coach, parent, or potluck..."
-                    className="h-11 w-full rounded-xl border border-red-200 bg-white pl-9 pr-9 text-base sm:text-sm text-zinc-900 transition-all duration-200 hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="Search player, coach, parent, or companion..."
+                    className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-9 text-base sm:text-sm text-zinc-900 transition-all duration-200 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
                   />
                   {searchQuery && (
                     <button
@@ -709,6 +996,7 @@ export function ChristmasRsvpExperience({
                       { value: "U7", label: "U7 Division", badge: "U7" },
                       { value: "U9", label: "U9 Division", badge: "U9" },
                       { value: "U13", label: "U13 Division", badge: "U13" },
+                      { value: "U15", label: "U15 Division", badge: "U15" },
                       { value: "Coach", label: "Coaching Staff", badge: "Coach" },
                     ]}
                     onChange={(val) => setGroupFilter(val ?? "all")}
@@ -731,11 +1019,11 @@ export function ChristmasRsvpExperience({
                     type="button"
                     onClick={refreshRsvps}
                     disabled={isRefreshing}
-                    className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 px-3 text-xs font-bold text-primary transition hover:bg-red-100/70 cursor-pointer"
+                    className="inline-flex h-11 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs font-bold text-zinc-700 transition hover:bg-zinc-100 cursor-pointer"
                   >
                     <RefreshCw
                       className={cn(
-                        "h-3.5 w-3.5 text-primary",
+                        "h-3.5 w-3.5 shrink-0 text-zinc-600",
                         isRefreshing && "animate-spin"
                       )}
                     />
@@ -747,7 +1035,7 @@ export function ChristmasRsvpExperience({
 
             {/* Confirmed RSVPs: Mobile Card Stack (< md) + Desktop Table (md+) */}
             {filteredRecords.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-red-200 bg-white/95 p-10 text-center">
+              <div className="rounded-3xl border border-dashed border-zinc-200 bg-white p-10 text-center">
                 <h3 className="text-base font-extrabold text-zinc-950">
                   No Christmas Party RSVPs Found
                 </h3>
@@ -758,7 +1046,7 @@ export function ChristmasRsvpExperience({
                 <button
                   type="button"
                   onClick={() => openRsvpForGroup()}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-red-700 cursor-pointer"
+                  className="mt-4 inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-red-700 cursor-pointer"
                 >
                   <span>Confirm Attendance Now</span>
                 </button>
@@ -772,27 +1060,20 @@ export function ChristmasRsvpExperience({
                     return (
                       <div
                         key={rec.id}
-                        className="rounded-2xl border border-red-200/80 bg-white p-4 shadow-2xs space-y-2.5"
+                        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xs space-y-2.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span
-                                className={cn(
-                                  "rounded-md px-2 py-0.5 font-mono text-[11px] font-bold",
-                                  isRecCoach
-                                    ? "bg-emerald-800 text-white"
-                                    : "bg-red-50 text-primary border border-red-200"
-                                )}
-                              >
+                              <span className="shrink-0 whitespace-nowrap rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 font-mono text-[11px] font-bold text-zinc-700">
                                 {rec.roleOrAgeGroup}
                               </span>
                               <span
                                 className={cn(
-                                  "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                  "shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold border",
                                   rec.attendanceStatus === "Attending"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : "bg-zinc-100 text-zinc-600"
+                                    ? "bg-zinc-50 text-zinc-700 border-zinc-200"
+                                    : "bg-zinc-100 text-zinc-500 border-zinc-200"
                                 )}
                               >
                                 {rec.attendanceStatus}
@@ -804,85 +1085,62 @@ export function ChristmasRsvpExperience({
                           </div>
 
                           {rec.attendanceStatus === "Attending" && (
-                            <div className="shrink-0 rounded-xl border border-red-200 bg-red-50/60 px-3 py-1.5 text-center">
-                              <div className="font-mono text-lg font-extrabold leading-none text-primary">
-                                {rec.totalPax}
-                              </div>
-                              <div className="text-[10px] font-bold uppercase text-zinc-500">
-                                Pax
-                              </div>
-                            </div>
+                            <span className="shrink-0 inline-flex items-center whitespace-nowrap rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-mono text-xs font-extrabold text-zinc-900">
+                              {rec.totalPax} Pax
+                            </span>
                           )}
                         </div>
 
-                        {!isRecCoach &&
-                          (rec.parentName ||
-                            rec.companionNames ||
-                            rec.potluckNotes) && (
-                            <div className="border-t border-red-100/80 pt-2 text-xs text-zinc-600 space-y-1">
-                              {rec.parentName && (
-                                <div>
-                                  <span className="font-bold text-zinc-800">
-                                    Parent/Guardian:
-                                  </span>{" "}
-                                  {rec.parentName}
-                                </div>
-                              )}
-                              {rec.companionNames && (
-                                <div>
-                                  <span className="font-bold text-zinc-800">
-                                    Companions:
-                                  </span>{" "}
-                                  {rec.companionNames}
-                                </div>
-                              )}
-                              {rec.potluckNotes && (
-                                <div>
-                                  <span className="font-bold text-primary">
-                                    Potluck/Notes:
-                                  </span>{" "}
-                                  {rec.potluckNotes}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                        {((!isRecCoach && rec.parentName) ||
+                          rec.companionNames) && (
+                          <div className="border-t border-zinc-100 pt-2 text-xs text-zinc-600 space-y-1">
+                            {!isRecCoach && rec.parentName && (
+                              <div>
+                                <span className="font-bold text-zinc-800">
+                                  Parent/Guardian:
+                                </span>{" "}
+                                {rec.parentName}
+                              </div>
+                            )}
+                            {rec.companionNames && (
+                              <div>
+                                <span className="font-bold text-zinc-800">
+                                  Companions:
+                                </span>{" "}
+                                {rec.companionNames}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
 
                 {/* Desktop Table (md+) */}
-                <div className="hidden md:block overflow-hidden rounded-3xl border border-red-200/80 bg-white/95 shadow-2xs">
+                <div className="hidden md:block overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xs">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="border-b border-red-100 bg-red-50/60 text-xs font-bold uppercase tracking-wider text-zinc-700">
+                      <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider text-zinc-600">
                         <tr>
                           <th className="py-3.5 pl-4 pr-3">Role / Age Group</th>
                           <th className="px-3 py-3.5">Player / Coach Name</th>
                           <th className="px-3 py-3.5">Status</th>
                           <th className="px-3 py-3.5 text-center">Total Pax</th>
                           <th className="px-3 py-3.5">Parent / Guardian</th>
-                          <th className="px-3 py-3.5">Companions</th>
-                          <th className="px-3 py-3.5 pr-4">Potluck / Notes</th>
+                          <th className="px-3 py-3.5 pr-4">Companions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-red-100/60">
+                      <tbody className="divide-y divide-zinc-100">
                         {filteredRecords.map((rec) => {
                           const isRecCoach = rec.roleOrAgeGroup === "Coach";
                           return (
                             <tr
                               key={rec.id}
-                              className="transition-colors hover:bg-red-50/30"
+                              className="transition-colors hover:bg-zinc-50/70"
                             >
                               <td className="whitespace-nowrap py-3.5 pl-4 pr-3">
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center rounded-md px-2 py-0.5 font-mono text-xs font-bold",
-                                    isRecCoach
-                                      ? "bg-emerald-800 text-white"
-                                      : "bg-red-50 text-primary border border-red-200"
-                                  )}
-                                >
+                                <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 font-mono text-xs font-bold text-zinc-700">
                                   {rec.roleOrAgeGroup}
                                 </span>
                               </td>
@@ -892,16 +1150,16 @@ export function ChristmasRsvpExperience({
                               <td className="whitespace-nowrap px-3 py-3.5">
                                 <span
                                   className={cn(
-                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold",
+                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold border",
                                     rec.attendanceStatus === "Attending"
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                      : "bg-zinc-100 text-zinc-600"
+                                      ? "bg-zinc-50 text-zinc-700 border-zinc-200"
+                                      : "bg-zinc-100 text-zinc-500 border-zinc-200"
                                   )}
                                 >
                                   {rec.attendanceStatus}
                                 </span>
                               </td>
-                              <td className="whitespace-nowrap px-3 py-3.5 text-center font-mono text-base font-extrabold text-primary">
+                              <td className="whitespace-nowrap px-3 py-3.5 text-center font-mono text-base font-extrabold text-zinc-900">
                                 {rec.totalPax}
                               </td>
                               <td className="px-3 py-3.5 text-zinc-700">
@@ -913,23 +1171,8 @@ export function ChristmasRsvpExperience({
                                   rec.parentName || "—"
                                 )}
                               </td>
-                              <td className="px-3 py-3.5 text-zinc-600">
-                                {isRecCoach ? (
-                                  <span className="text-xs italic text-zinc-400">
-                                    —
-                                  </span>
-                                ) : (
-                                  rec.companionNames || "—"
-                                )}
-                              </td>
                               <td className="px-3 py-3.5 pr-4 text-zinc-600">
-                                {isRecCoach ? (
-                                  <span className="text-xs italic text-zinc-400">
-                                    —
-                                  </span>
-                                ) : (
-                                  rec.potluckNotes || "—"
-                                )}
+                                {rec.companionNames || "—"}
                               </td>
                             </tr>
                           );
@@ -959,7 +1202,11 @@ export function ChristmasRsvpExperience({
                 />
               </Dialog.Overlay>
 
-              <Dialog.Content asChild>
+              <Dialog.Content
+                asChild
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                 <motion.div
                   initial={{ opacity: 0, y: 20, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1043,7 +1290,7 @@ export function ChristmasRsvpExperience({
                             <div>
                               <span
                                 className={cn(
-                                  "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white",
+                                  "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase text-white",
                                   submittedRecord.attendanceStatus ===
                                     "Not Attending"
                                     ? "bg-zinc-800"
@@ -1060,14 +1307,9 @@ export function ChristmasRsvpExperience({
                             </div>
 
                             {submittedRecord.attendanceStatus === "Attending" && (
-                              <div className="rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-center shadow-2xs">
-                                <div className="text-[10px] font-bold uppercase text-zinc-500">
-                                  Total Pax
-                                </div>
-                                <div className="font-mono text-2xl font-extrabold text-primary">
-                                  {submittedRecord.totalPax}
-                                </div>
-                              </div>
+                              <span className="shrink-0 inline-flex items-center whitespace-nowrap rounded-2xl border border-red-200 bg-white px-3.5 py-2 font-mono text-sm font-extrabold text-primary shadow-2xs">
+                                {submittedRecord.totalPax} Pax
+                              </span>
                             )}
                           </div>
 
@@ -1117,44 +1359,49 @@ export function ChristmasRsvpExperience({
                               </>
                             )}
 
-                            {submittedRecord.roleOrAgeGroup !== "Coach" && (
-                              <>
-                                {submittedRecord.parentName && (
-                                  <div className="col-span-2 sm:col-span-1">
-                                    <dt className="text-[11px] font-semibold text-zinc-500">
-                                      Parent / Guardian
-                                    </dt>
-                                    <dd className="font-bold text-zinc-950">
-                                      {submittedRecord.parentName}
-                                    </dd>
-                                  </div>
-                                )}
-                                {submittedRecord.attendanceStatus ===
-                                  "Attending" &&
-                                  submittedRecord.companionNames && (
-                                    <div className="col-span-2 sm:col-span-1">
-                                      <dt className="text-[11px] font-semibold text-zinc-500">
-                                        Companions
-                                      </dt>
-                                      <dd className="font-bold text-zinc-950">
-                                        {submittedRecord.companionNames}
-                                      </dd>
-                                    </div>
-                                  )}
-                                {submittedRecord.attendanceStatus ===
-                                  "Attending" &&
-                                  submittedRecord.potluckNotes && (
-                                    <div className="col-span-2">
-                                      <dt className="text-[11px] font-semibold text-zinc-500">
-                                        Potluck / Notes
-                                      </dt>
-                                      <dd className="font-bold text-zinc-950">
-                                        {submittedRecord.potluckNotes}
-                                      </dd>
-                                    </div>
-                                  )}
-                              </>
+                            {submittedSiblings.length > 0 && (
+                              <div className="col-span-2">
+                                <dt className="text-[11px] font-semibold text-zinc-500">
+                                  Sibling Player{submittedSiblings.length > 1 ? "s" : ""} Registered
+                                </dt>
+                                <dd className="mt-1 flex flex-wrap gap-1.5">
+                                  {submittedSiblings.map((sib) => (
+                                    <span
+                                      key={sib.id}
+                                      className="inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-extrabold text-zinc-900"
+                                    >
+                                      <span className="shrink-0 whitespace-nowrap rounded bg-primary px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                        {sib.roleOrAgeGroup}
+                                      </span>
+                                      <span className="truncate">{sib.playerName}</span>
+                                    </span>
+                                  ))}
+                                </dd>
+                              </div>
                             )}
+
+                            {submittedRecord.roleOrAgeGroup !== "Coach" &&
+                              submittedRecord.parentName && (
+                                <div className="col-span-2 sm:col-span-1">
+                                  <dt className="text-[11px] font-semibold text-zinc-500">
+                                    Parent / Guardian
+                                  </dt>
+                                  <dd className="font-bold text-zinc-950">
+                                    {submittedRecord.parentName}
+                                  </dd>
+                                </div>
+                              )}
+                            {submittedRecord.attendanceStatus === "Attending" &&
+                              submittedRecord.companionNames && (
+                                <div className="col-span-2 sm:col-span-1">
+                                  <dt className="text-[11px] font-semibold text-zinc-500">
+                                    Companions
+                                  </dt>
+                                  <dd className="font-bold text-zinc-950">
+                                    {submittedRecord.companionNames}
+                                  </dd>
+                                </div>
+                              )}
                           </dl>
                         </div>
 
@@ -1164,7 +1411,7 @@ export function ChristmasRsvpExperience({
                             setIsRsvpDialogOpen(false);
                             setActiveTab("roster");
                           }}
-                          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
+                          className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-xl bg-primary px-4 text-xs font-extrabold text-white transition hover:bg-red-700 cursor-pointer"
                         >
                           View Confirmed Guests
                         </button>
@@ -1182,7 +1429,7 @@ export function ChristmasRsvpExperience({
                           <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800">
                             1. Select Age Group or Coach Role
                           </label>
-                          <div className="grid grid-cols-5 gap-1.5">
+                          <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
                             {ROLE_OR_AGE_GROUP_OPTIONS.map((opt) => {
                               const selected = roleOrAgeGroup === opt.value;
                               return (
@@ -1193,7 +1440,7 @@ export function ChristmasRsvpExperience({
                                     handleSelectRoleOrAgeGroup(opt.value)
                                   }
                                   className={cn(
-                                    "flex items-center justify-center rounded-xl border py-2.5 px-1 text-center text-xs font-extrabold transition-all active:scale-95 cursor-pointer",
+                                    "flex items-center justify-center whitespace-nowrap rounded-xl border py-2.5 px-1 text-center text-xs font-extrabold transition-all active:scale-95 cursor-pointer",
                                     selected
                                       ? "border-primary bg-gradient-to-b from-[#D91B23] to-[#B01219] text-white shadow-sm ring-2 ring-primary/20"
                                       : "border-red-100 bg-white text-zinc-800 hover:border-primary/40 hover:bg-red-50/40"
@@ -1206,21 +1453,30 @@ export function ChristmasRsvpExperience({
                           </div>
                         </div>
 
-                        {/* 2. PLAYER OR COACH NAME */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
+                        {/* 2. PLAYER OR COACH NAME (+ SIBLING PLAYERS) */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
                             <label
                               htmlFor="dialog-player-name"
-                              className="block text-xs font-extrabold uppercase tracking-wider text-zinc-800"
+                              className="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-zinc-800"
                             >
                               {isCoach
                                 ? "2. Specific Name of Coach *"
                                 : `2. Specific Name of Player (${roleOrAgeGroup}) *`}
                             </label>
-                            {isCoach && (
-                              <span className="rounded-full bg-emerald-800 px-2 py-0.5 font-mono text-[10px] font-bold text-white">
+                            {isCoach ? (
+                              <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-800 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
                                 Coach Mode
                               </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={addSiblingPlayer}
+                                className="shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-extrabold text-primary transition hover:bg-red-100/80 active:scale-95 cursor-pointer"
+                              >
+                                <Plus className="h-3.5 w-3.5 shrink-0" />
+                                <span>Add Sibling as Player</span>
+                              </button>
                             )}
                           </div>
 
@@ -1240,6 +1496,75 @@ export function ChristmasRsvpExperience({
                             }
                             className="h-11 w-full rounded-xl border border-red-200 bg-white px-3.5 text-base sm:text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
+
+                          {/* Sibling Player Rows */}
+                          {!isCoach && siblings.length > 0 && (
+                            <div className="space-y-2 pt-1">
+                              {siblings.map((sib, idx) => (
+                                <div
+                                  key={sib.id}
+                                  className="rounded-2xl border border-red-200/90 bg-red-50/40 p-3 space-y-2"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="truncate whitespace-nowrap text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                                      Sibling Player #{idx + 1} ({sib.ageGroup}) *
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSiblingPlayer(sib.id)}
+                                      className="shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-0.5 text-[11px] font-bold text-zinc-500 transition hover:bg-red-100/70 hover:text-primary cursor-pointer"
+                                    >
+                                      <X className="h-3.5 w-3.5 shrink-0" />
+                                      <span>Remove</span>
+                                    </button>
+                                  </div>
+
+                                  <div className="grid grid-cols-5 gap-1">
+                                    {(
+                                      [
+                                        "U5",
+                                        "U7",
+                                        "U9",
+                                        "U13",
+                                        "U15",
+                                      ] as PlayerAgeGroup[]
+                                    ).map((div) => (
+                                      <button
+                                        key={div}
+                                        type="button"
+                                        onClick={() =>
+                                          updateSiblingPlayer(sib.id, {
+                                            ageGroup: div,
+                                          })
+                                        }
+                                        className={cn(
+                                          "whitespace-nowrap rounded-lg border py-1.5 text-center font-mono text-[11px] font-extrabold transition cursor-pointer",
+                                          sib.ageGroup === div
+                                            ? "border-primary bg-primary text-white shadow-2xs"
+                                            : "border-red-100 bg-white text-zinc-700 hover:border-primary/40"
+                                        )}
+                                      >
+                                        {div}
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    required
+                                    value={sib.name}
+                                    onChange={(e) =>
+                                      updateSiblingPlayer(sib.id, {
+                                        name: e.target.value,
+                                      })
+                                    }
+                                    placeholder={`Enter Sibling #${idx + 1}'s full name`}
+                                    className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm font-semibold text-zinc-950 placeholder:font-normal placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         {/* 3. ATTENDANCE & SPECIFIC NUMBER OF PAX */}
@@ -1253,10 +1578,14 @@ export function ChristmasRsvpExperience({
                               type="button"
                               onClick={() => {
                                 setAttendanceStatus("Attending");
-                                if (totalPax < 1) setTotalPax(isCoach ? 1 : 2);
+                                if (totalPax < minAttendingPax) {
+                                  setTotalPax(
+                                    isCoach ? 1 : Math.max(2, minAttendingPax)
+                                  );
+                                }
                               }}
                               className={cn(
-                                "flex items-center justify-center rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
+                                "flex items-center justify-center whitespace-nowrap rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
                                 attendanceStatus === "Attending"
                                   ? "border-primary bg-primary text-white shadow-xs"
                                   : "border-red-100 bg-white text-zinc-700"
@@ -1271,11 +1600,11 @@ export function ChristmasRsvpExperience({
                                 setAttendanceStatus("Not Attending");
                                 setTotalPax(0);
                                 setContactNumber("");
-                                setCompanionNames("");
-                                setPotluckNotes("");
+                                setCompanionList([]);
+                                setCompanionInput("");
                               }}
                               className={cn(
-                                "flex items-center justify-center rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
+                                "flex items-center justify-center whitespace-nowrap rounded-xl border py-2.5 px-3 text-xs font-extrabold transition cursor-pointer",
                                 attendanceStatus === "Not Attending"
                                   ? "border-zinc-900 bg-zinc-900 text-white shadow-xs"
                                   : "border-red-100 bg-white text-zinc-700"
@@ -1294,8 +1623,10 @@ export function ChristmasRsvpExperience({
                                   </div>
                                   <div className="text-[11px] text-zinc-600">
                                     {isCoach
-                                      ? "Coach headcount"
-                                      : `1 Player + ${companionCount} Family Companion${companionCount === 1 ? "" : "s"}`}
+                                      ? `1 Coach + ${companionCount} Companion${companionCount === 1 ? "" : "s"}`
+                                      : playerCount > 1
+                                        ? `${playerCount} Players (incl. ${siblings.length} Sibling${siblings.length > 1 ? "s" : ""}) + ${companionCount} Family Companion${companionCount === 1 ? "" : "s"}`
+                                        : `1 Player + ${companionCount} Family Companion${companionCount === 1 ? "" : "s"}`}
                                   </div>
                                 </div>
 
@@ -1304,27 +1635,26 @@ export function ChristmasRsvpExperience({
                                     type="button"
                                     aria-label="Decrease pax"
                                     onClick={() =>
-                                      setTotalPax((prev) =>
-                                        Math.max(1, prev - 1)
-                                      )
+                                      updateTotalPax(totalPax - 1)
                                     }
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-white text-zinc-900 active:scale-95 cursor-pointer"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-zinc-900 active:scale-95 cursor-pointer"
                                   >
                                     <Minus className="h-4 w-4" />
                                   </button>
 
                                   <input
                                     type="number"
-                                    min={1}
+                                    min={minAttendingPax}
                                     max={30}
                                     aria-label="Total Pax"
                                     value={totalPax}
                                     onChange={(e) => {
                                       const val = parseInt(e.target.value, 10);
-                                      setTotalPax(
-                                        Number.isFinite(val) && val >= 1
-                                          ? Math.min(30, val)
-                                          : 1
+                                      updateTotalPax(
+                                        Number.isFinite(val) &&
+                                          val >= minAttendingPax
+                                          ? val
+                                          : minAttendingPax
                                       );
                                     }}
                                     className="h-10 w-16 rounded-xl border border-primary/50 bg-white text-center font-mono text-base font-extrabold text-primary focus:border-primary focus:outline-none"
@@ -1334,33 +1664,37 @@ export function ChristmasRsvpExperience({
                                     type="button"
                                     aria-label="Increase pax"
                                     onClick={() =>
-                                      setTotalPax((prev) =>
-                                        Math.min(30, prev + 1)
-                                      )
+                                      updateTotalPax(totalPax + 1)
                                     }
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-white text-zinc-900 active:scale-95 cursor-pointer"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-zinc-900 active:scale-95 cursor-pointer"
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-red-100">
-                                {[1, 2, 3, 4, 5, 6].map((num) => (
-                                  <button
-                                    key={num}
-                                    type="button"
-                                    onClick={() => setTotalPax(num)}
-                                    className={cn(
-                                      "flex-1 rounded-lg py-1 font-mono text-xs font-bold transition cursor-pointer",
-                                      totalPax === num
-                                        ? "bg-primary text-white shadow-2xs"
-                                        : "bg-white text-zinc-700 border border-red-100"
-                                    )}
-                                  >
-                                    {num}
-                                  </button>
-                                ))}
+                              <div className="flex gap-1.5 pt-1 border-t border-red-100">
+                                {[1, 2, 3, 4, 5, 6].map((num) => {
+                                  const disabled = num < minAttendingPax;
+                                  return (
+                                    <button
+                                      key={num}
+                                      type="button"
+                                      disabled={disabled}
+                                      onClick={() => updateTotalPax(num)}
+                                      className={cn(
+                                        "flex-1 whitespace-nowrap rounded-lg py-1 font-mono text-xs font-bold transition",
+                                        disabled
+                                          ? "bg-zinc-100 text-zinc-300 border border-zinc-200 cursor-not-allowed"
+                                          : totalPax === num
+                                            ? "bg-primary text-white shadow-2xs cursor-pointer"
+                                            : "bg-white text-zinc-700 border border-red-100 cursor-pointer"
+                                      )}
+                                    >
+                                      {num}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -1428,48 +1762,84 @@ export function ChristmasRsvpExperience({
                               </div>
 
                               {attendanceStatus === "Attending" && (
-                                <>
-                                  <div className="space-y-1">
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
                                     <label
                                       htmlFor="dialog-companions"
-                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
+                                      className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-700"
                                     >
                                       Companion Names{" "}
                                       {companionCount > 0
-                                        ? `(${companionCount} guest${companionCount > 1 ? "s" : ""})`
-                                        : "(Optional)"}
+                                        ? `(${companionList.length}/${companionCount} guest${companionCount > 1 ? "s" : ""})`
+                                        : `(0 guests for ${playerCount} Pax)`}
                                     </label>
-                                    <input
-                                      id="dialog-companions"
-                                      type="text"
-                                      value={companionNames}
-                                      onChange={(e) =>
-                                        setCompanionNames(e.target.value)
-                                      }
-                                      placeholder="Names of accompanying family members..."
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                    />
+                                    <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-zinc-500">
+                                      {companionCount === 0
+                                        ? `Increase Pax above ${playerCount} to add companions`
+                                        : isCompanionLimitReached
+                                          ? `Max ${companionCount} companion${companionCount > 1 ? "s" : ""} reached`
+                                          : "Type a comma (,) to add badge"}
+                                    </span>
                                   </div>
 
-                                  <div className="space-y-1">
-                                    <label
-                                      htmlFor="dialog-potluck"
-                                      className="block text-[11px] font-bold uppercase tracking-wider text-zinc-700"
-                                    >
-                                      Holiday Potluck / Notes (Optional)
-                                    </label>
-                                    <input
-                                      id="dialog-potluck"
-                                      type="text"
-                                      value={potluckNotes}
-                                      onChange={(e) =>
-                                        setPotluckNotes(e.target.value)
+                                  <div
+                                    onClick={() => {
+                                      if (!isCompanionLimitReached) {
+                                        companionInputRef.current?.focus();
                                       }
-                                      placeholder="e.g. Bringing Christmas Ham / Pasta / Drinks..."
-                                      className="h-10 w-full rounded-xl border border-red-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                                    />
+                                    }}
+                                    className={cn(
+                                      "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border border-red-200 bg-white px-2.5 py-1.5 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
+                                      companionCount === 0
+                                        ? "bg-zinc-100/80 border-zinc-200 cursor-not-allowed"
+                                        : isCompanionLimitReached
+                                          ? "cursor-default"
+                                          : "cursor-text"
+                                    )}
+                                  >
+                                    {companionList.map((name, idx) => (
+                                      <span
+                                        key={`${name}-${idx}`}
+                                        className="inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-primary shadow-2xs"
+                                      >
+                                        <span className="truncate">{name}</span>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeCompanionBadge(idx);
+                                          }}
+                                          aria-label={`Remove ${name}`}
+                                          className="ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-primary/70 transition hover:bg-red-200/70 hover:text-primary cursor-pointer"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </span>
+                                    ))}
+
+                                    {!isCompanionLimitReached ? (
+                                      <input
+                                        ref={companionInputRef}
+                                        id="dialog-companions"
+                                        type="text"
+                                        value={companionInput}
+                                        onChange={handleCompanionInputChange}
+                                        onKeyDown={handleCompanionKeyDown}
+                                        onBlur={handleCompanionBlur}
+                                        placeholder={
+                                          companionList.length === 0
+                                            ? "Type name + comma (e.g. Santa Claus, Rudolf)..."
+                                            : `Add ${companionCount - companionList.length} more companion${companionCount - companionList.length > 1 ? "s" : ""}...`
+                                        }
+                                        className="min-w-[140px] flex-1 bg-transparent px-1 py-0.5 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none"
+                                      />
+                                    ) : companionCount === 0 ? (
+                                      <span className="truncate whitespace-nowrap px-1 py-0.5 text-xs text-zinc-400">
+                                        {playerCount} Pax = {playerCount > 1 ? "Players" : "Player"} only (increase Pax to add companions)
+                                      </span>
+                                    ) : null}
                                   </div>
-                                </>
+                                </div>
                               )}
                             </motion.div>
                           ) : attendanceStatus === "Attending" ? (
@@ -1479,29 +1849,110 @@ export function ChristmasRsvpExperience({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -6 }}
                               transition={{ duration: 0.16 }}
-                              className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3.5 space-y-2"
+                              className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3.5 space-y-3"
                             >
-                              <div className="flex items-center justify-between">
-                                <label
-                                  htmlFor="dialog-contact-coach"
-                                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800"
-                                >
-                                  Coach Contact Number (Optional)
-                                </label>
-                                <span className="text-[10px] font-semibold text-emerald-800">
-                                  Parent, Companion &amp; Potluck omitted
-                                </span>
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <label
+                                    htmlFor="dialog-contact-coach"
+                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-800"
+                                  >
+                                    Coach Contact Number (Optional)
+                                  </label>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] font-semibold text-emerald-800">
+                                    Parent / Guardian omitted
+                                  </span>
+                                </div>
+                                <input
+                                  id="dialog-contact-coach"
+                                  type="tel"
+                                  value={contactNumber}
+                                  onChange={(e) =>
+                                    setContactNumber(e.target.value)
+                                  }
+                                  placeholder="0917 XXX XXXX"
+                                  className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
+                                />
                               </div>
-                              <input
-                                id="dialog-contact-coach"
-                                type="tel"
-                                value={contactNumber}
-                                onChange={(e) =>
-                                  setContactNumber(e.target.value)
-                                }
-                                placeholder="0917 XXX XXXX"
-                                className="h-10 w-full rounded-xl border border-emerald-200 bg-white px-3 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:border-primary focus:outline-none"
-                              />
+
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <label
+                                    htmlFor="dialog-companions"
+                                    className="truncate text-[11px] font-bold uppercase tracking-wider text-zinc-800"
+                                  >
+                                    Companion Names{" "}
+                                    {companionCount > 0
+                                      ? `(${companionList.length}/${companionCount} guest${companionCount > 1 ? "s" : ""})`
+                                      : "(0 guests for 1 Pax)"}
+                                  </label>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-emerald-900/70">
+                                    {companionCount === 0
+                                      ? "Increase Pax above 1 to add companions"
+                                      : isCompanionLimitReached
+                                        ? `Max ${companionCount} companion${companionCount > 1 ? "s" : ""} reached`
+                                        : "Type a comma (,) to add badge"}
+                                  </span>
+                                </div>
+
+                                <div
+                                  onClick={() => {
+                                    if (!isCompanionLimitReached) {
+                                      companionInputRef.current?.focus();
+                                    }
+                                  }}
+                                  className={cn(
+                                    "flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-2.5 py-1.5 transition focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/20",
+                                    companionCount === 0
+                                      ? "bg-zinc-100/80 border-zinc-200 cursor-not-allowed"
+                                      : isCompanionLimitReached
+                                        ? "cursor-default"
+                                        : "cursor-text"
+                                  )}
+                                >
+                                  {companionList.map((name, idx) => (
+                                    <span
+                                      key={`${name}-${idx}`}
+                                      className="inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-900 shadow-2xs"
+                                    >
+                                      <span className="truncate">{name}</span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeCompanionBadge(idx);
+                                        }}
+                                        aria-label={`Remove ${name}`}
+                                        className="ml-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-emerald-800/70 transition hover:bg-emerald-200/70 hover:text-emerald-950 cursor-pointer"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+
+                                  {!isCompanionLimitReached ? (
+                                    <input
+                                      ref={companionInputRef}
+                                      id="dialog-companions"
+                                      type="text"
+                                      value={companionInput}
+                                      onChange={handleCompanionInputChange}
+                                      onKeyDown={handleCompanionKeyDown}
+                                      onBlur={handleCompanionBlur}
+                                      placeholder={
+                                        companionList.length === 0
+                                          ? "Type name + comma (e.g. Santa Claus, Rudolf)..."
+                                          : `Add ${companionCount - companionList.length} more companion${companionCount - companionList.length > 1 ? "s" : ""}...`
+                                      }
+                                      className="min-w-[140px] flex-1 bg-transparent px-1 py-0.5 text-base sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none"
+                                    />
+                                  ) : companionCount === 0 ? (
+                                    <span className="truncate whitespace-nowrap px-1 py-0.5 text-xs text-zinc-400">
+                                      1 Pax = Coach only (increase Pax to add companions)
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
                             </motion.div>
                           ) : null}
                         </AnimatePresence>
@@ -1518,13 +1969,15 @@ export function ChristmasRsvpExperience({
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-5 text-sm font-extrabold text-white shadow-md shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+                          className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-5 text-sm font-extrabold text-white shadow-md shadow-red-600/20 ring-1 ring-amber-300/40 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                         >
-                          {isSubmitting
-                            ? "Saving Holiday RSVP..."
-                            : attendanceStatus === "Attending"
-                              ? `Confirm Christmas Attendance (${totalPax} Pax)`
-                              : "Submit RSVP Response"}
+                          <span className="truncate">
+                            {isSubmitting
+                              ? "Saving Holiday RSVP..."
+                              : attendanceStatus === "Attending"
+                                ? `Confirm Christmas Attendance (${totalPax} Pax)`
+                                : "Submit RSVP Response"}
+                          </span>
                         </button>
                       </form>
                     )}
@@ -1536,10 +1989,10 @@ export function ChristmasRsvpExperience({
         </AnimatePresence>
       </Dialog.Root>
 
-      {/* FESTIVE BOTTOM STICKY NAVIGATION BAR */}
+      {/* CLEAN BOTTOM STICKY NAVIGATION BAR */}
       <nav
         aria-label="Bottom sticky navigation"
-        className="fixed bottom-0 inset-x-0 z-40 border-t border-red-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(185,20,28,0.08)] backdrop-blur-md"
+        className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(0,0,0,0.05)] backdrop-blur-md"
       >
         <div className="mx-auto grid h-17 max-w-lg grid-cols-3 items-center gap-2 px-3">
           {/* 1. Christmas Pass Tab */}
@@ -1547,9 +2000,9 @@ export function ChristmasRsvpExperience({
             type="button"
             onClick={() => setActiveTab("pass")}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition cursor-pointer",
+              "flex flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl py-1.5 transition cursor-pointer",
               activeTab === "pass" && !isRsvpDialogOpen
-                ? "text-primary font-extrabold"
+                ? "text-zinc-950 font-extrabold"
                 : "text-zinc-500 font-semibold hover:text-zinc-900"
             )}
           >
@@ -1557,20 +2010,20 @@ export function ChristmasRsvpExperience({
               className={cn(
                 "h-5 w-5",
                 activeTab === "pass" && !isRsvpDialogOpen
-                  ? "text-emerald-700"
-                  : "text-zinc-500"
+                  ? "text-zinc-900"
+                  : "text-zinc-400"
               )}
             />
-            <span className="text-[11px]">Christmas Pass</span>
+            <span className="text-[11px] whitespace-nowrap">Christmas Pass</span>
           </button>
 
           {/* 2. Center Primary Action: Open Animated Christmas RSVP Dialog */}
           <button
             type="button"
             onClick={() => openRsvpForGroup()}
-            className="flex h-12 items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-3 text-xs font-extrabold text-white shadow-md shadow-red-600/25 ring-1 ring-amber-300/50 transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl bg-gradient-to-r from-[#D91B23] to-[#B01219] px-3 text-xs font-extrabold text-white shadow-md shadow-red-600/25 ring-2 ring-red-500/15 transition hover:brightness-110 active:scale-95 cursor-pointer"
           >
-            <Gift className="h-4 w-4 shrink-0 text-amber-200" />
+            <Gift className="h-4 w-4 shrink-0 text-white" />
             <span className="truncate">Confirm RSVP</span>
           </button>
 
@@ -1579,19 +2032,19 @@ export function ChristmasRsvpExperience({
             type="button"
             onClick={() => setActiveTab("roster")}
             className={cn(
-              "relative flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition cursor-pointer",
+              "relative flex flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl py-1.5 transition cursor-pointer",
               activeTab === "roster" && !isRsvpDialogOpen
-                ? "text-primary font-extrabold"
+                ? "text-zinc-950 font-extrabold"
                 : "text-zinc-500 font-semibold hover:text-zinc-900"
             )}
           >
             <div className="relative">
               <Users className="h-5 w-5" />
-              <span className="absolute -right-3.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-white ring-1 ring-amber-200">
+              <span className="absolute -right-3.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center whitespace-nowrap rounded-full bg-zinc-800 px-1 font-mono text-[9px] font-bold text-white">
                 {stats.totalPax}
               </span>
             </div>
-            <span className="text-[11px]">Confirmed Pax</span>
+            <span className="text-[11px] whitespace-nowrap">Confirmed Pax</span>
           </button>
         </div>
       </nav>

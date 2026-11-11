@@ -99,6 +99,7 @@ export function normalizeRoleOrAgeGroup(raw: string): RoleOrAgeGroup {
   if (clean === "U7" || clean === "UNDER 7") return "U7";
   if (clean === "U9" || clean === "UNDER 9") return "U9";
   if (clean === "U13" || clean === "UNDER 13") return "U13";
+  if (clean === "U15" || clean === "UNDER 15") return "U15";
   return "U9";
 }
 
@@ -188,9 +189,8 @@ export function rsvpToSheetRow(record: ChristmasRsvpRecord): string[] {
     record.attendanceStatus,
     String(isAttending ? record.totalPax : 0),
     isCoach ? "" : record.parentName,
-    isCoach || !isAttending ? "" : record.companionNames,
+    !isAttending ? "" : record.companionNames,
     !isAttending ? "" : record.contactNumber,
-    isCoach || !isAttending ? "" : record.potluckNotes,
   ];
 }
 
@@ -224,9 +224,8 @@ function parseSheetRows(rows: string[][]): ChristmasRsvpRecord[] {
       attendanceStatus,
       totalPax,
       parentName: isCoach ? "" : (r[5] ?? "").trim(),
-      companionNames: isCoach ? "" : (r[6] ?? "").trim(),
+      companionNames: (r[6] ?? "").trim(),
       contactNumber: (r[7] ?? "").trim(),
-      potluckNotes: isCoach ? "" : (r[8] ?? "").trim(),
       syncedToSheet: true,
     });
   }
@@ -321,6 +320,7 @@ export function computeSummaryStats(
     U7: { entries: 0, attendingEntries: 0, pax: 0 },
     U9: { entries: 0, attendingEntries: 0, pax: 0 },
     U13: { entries: 0, attendingEntries: 0, pax: 0 },
+    U15: { entries: 0, attendingEntries: 0, pax: 0 },
     Coach: { entries: 0, attendingEntries: 0, pax: 0 },
   };
 
@@ -473,7 +473,6 @@ export async function saveRsvpRecord(
     parentName?: string;
     companionNames?: string;
     contactNumber?: string;
-    potluckNotes?: string;
   },
   customAppsScriptUrl?: string
 ): Promise<{
@@ -513,11 +512,8 @@ export async function saveRsvpRecord(
     totalPax,
     // Enforce Coach & Not Attending rules
     parentName: isCoach ? "" : (input.parentName ?? "").trim(),
-    companionNames:
-      isCoach || !isAttending ? "" : (input.companionNames ?? "").trim(),
+    companionNames: !isAttending ? "" : (input.companionNames ?? "").trim(),
     contactNumber: !isAttending ? "" : (input.contactNumber ?? "").trim(),
-    potluckNotes:
-      isCoach || !isAttending ? "" : (input.potluckNotes ?? "").trim(),
     syncedToSheet: false,
   };
 

@@ -83,7 +83,7 @@ export function Combobox({
               </span>
             )}
             {selectedOption?.badge && (
-              <span className="hidden shrink-0 rounded-md bg-primary/10 border border-primary/25 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary sm:inline-block">
+              <span className="hidden shrink-0 whitespace-nowrap rounded-md bg-primary/10 border border-primary/25 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary sm:inline-block">
                 {selectedOption.badge}
               </span>
             )}
@@ -173,7 +173,7 @@ export function Combobox({
                       </div>
                     </div>
                     {option.badge && (
-                      <span className="shrink-0 rounded-md bg-red-50 border border-red-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                      <span className="shrink-0 whitespace-nowrap rounded-md bg-red-50 border border-red-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
                         {option.badge}
                       </span>
                     )}

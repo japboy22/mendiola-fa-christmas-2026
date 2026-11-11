@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title:
     "Mendiola Football Academy - Bulacan | Christmas Party 2026 RSVP",
   description:
-    "Official Christmas Party 2026 confirmation of attendance for Mendiola Football Academy - Bulacan (U5, U7, U9, U13 & Coaches). December 15, 2026, 3:00 PM at Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan.",
+    "Official Christmas Party 2026 confirmation of attendance for Mendiola Football Academy - Bulacan (U5, U7, U9, U13, U15 & Coaches). December 15, 2026, 3:00 PM at Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

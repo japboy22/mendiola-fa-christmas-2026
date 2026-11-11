@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
       parentName?: string;
       companionNames?: string;
       contactNumber?: string;
-      potluckNotes?: string;
     };
 
     if (body.action === "clearLocal") {
@@ -104,9 +103,8 @@ export async function POST(request: NextRequest) {
         attendanceStatus,
         totalPax,
         parentName: isCoach ? "" : body.parentName,
-        companionNames: isCoach ? "" : body.companionNames,
+        companionNames: body.companionNames,
         contactNumber: body.contactNumber,
-        potluckNotes: isCoach ? "" : body.potluckNotes,
       },
       body.appsScriptUrl
     );

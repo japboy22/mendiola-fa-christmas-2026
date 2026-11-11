@@ -26,7 +26,6 @@ const HEADERS = [
   "Parent / Guardian Name",
   "Companion Names",
   "Contact Number",
-  "Potluck / Notes",
 ];
 
 function jsonResponse(payload) {
@@ -74,12 +73,12 @@ function doPost(e) {
         const existingRole = String(data[i][1] || "").trim().toLowerCase();
         const existingName = String(data[i][2] || "").trim().toLowerCase();
         if (existingRole === incomingRole && existingName === incomingName && incomingName) {
-          sheet.getRange(i + 1, 1, 1, 9).setValues([body.row.slice(0, 9)]);
+          sheet.getRange(i + 1, 1, 1, 8).setValues([body.row.slice(0, 8)]);
           return jsonResponse({ ok: true, mode: "updated", rowNumber: i + 1 });
         }
       }
 
-      sheet.appendRow(body.row.slice(0, 9));
+      sheet.appendRow(body.row.slice(0, 8));
       return jsonResponse({ ok: true, mode: "appended", rowNumber: sheet.getLastRow() });
     }
 
@@ -104,11 +103,11 @@ function doPost(e) {
         }
 
         if (matchedRowIndex > 1) {
-          sheet.getRange(matchedRowIndex, 1, 1, 9).setValues([row.slice(0, 9)]);
+          sheet.getRange(matchedRowIndex, 1, 1, 8).setValues([row.slice(0, 8)]);
           updated++;
         } else {
-          sheet.appendRow(row.slice(0, 9));
-          data.push(row.slice(0, 9));
+          sheet.appendRow(row.slice(0, 8));
+          data.push(row.slice(0, 8));
           appended++;
         }
       });

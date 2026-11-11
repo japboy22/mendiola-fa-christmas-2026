@@ -41,15 +41,15 @@ function doPost(e) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][1] || "").trim().toLowerCase() === role &&
           String(data[i][2] || "").trim().toLowerCase() === name && name) {
-        sheet.getRange(i + 1, 1, 1, 9).setValues([body.row.slice(0, 9)]);
+        sheet.getRange(i + 1, 1, 1, 8).setValues([body.row.slice(0, 8)]);
         return jsonResponse({ ok: true, mode: "updated" });
       }
     }
-    sheet.appendRow(body.row.slice(0, 9));
+    sheet.appendRow(body.row.slice(0, 8));
     return jsonResponse({ ok: true, mode: "appended" });
   }
   if (body.action === "batchUpsert" && Array.isArray(body.rows)) {
-    body.rows.forEach(function(r) { sheet.appendRow(r.slice(0, 9)); });
+    body.rows.forEach(function(r) { sheet.appendRow(r.slice(0, 8)); });
     return jsonResponse({ ok: true });
   }
   return jsonResponse({ ok: false });
@@ -69,18 +69,16 @@ export function SheetSyncModal({
   onAppsScriptSaved,
 }: SheetSyncModalProps) {
   const [copied, setCopied] = React.useState(false);
-  const [urlInput, setUrlInput] = React.useState("");
+  const [urlInput, setUrlInput] = React.useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return localStorage.getItem("mfc_xmas_apps_script_url") || "";
+    } catch {
+      return "";
+    }
+  });
   const [saving, setSaving] = React.useState(false);
   const [feedback, setFeedback] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem("mfc_xmas_apps_script_url") || "";
-      if (saved) setUrlInput(saved);
-    } catch {
-      // Ignore storage access errors
-    }
-  }, []);
 
   const handleCopyCode = async () => {
     try {
@@ -176,7 +174,7 @@ export function SheetSyncModal({
             <div className="rounded-xl border border-red-100 bg-red-50/50 p-3.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-bold text-zinc-950">
-                  Database Columns (Sheet1!A1:I1)
+                  Database Columns (Sheet1!A1:H1)
                 </p>
                 <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-800">
                   LIVE READ CONNECTED
@@ -186,7 +184,7 @@ export function SheetSyncModal({
                 <code className="font-mono text-[11px] text-zinc-800">
                   Timestamp · Role / Age Group · Player / Coach Name · Attendance
                   Status · Total Pax · Parent / Guardian Name · Companion Names ·
-                  Contact Number · Potluck / Notes
+                  Contact Number
                 </code>
               </p>
             </div>
