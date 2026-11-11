@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Mendiola Football Academy - Bulacan | Christmas Party 2026",
     short_name: "Mendiola Xmas",
     description:
-      "Official Christmas Party 2026 Attendance Confirmation (RSVP) for Mendiola Football Academy - Bulacan. December 15, 2026, 3:00 PM at Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan.",
+      "Official Christmas Party 2026 Attendance Confirmation (RSVP) for Mendiola Football Academy - Bulacan. December 5, 2026, 3:00 PM at Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan.",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",

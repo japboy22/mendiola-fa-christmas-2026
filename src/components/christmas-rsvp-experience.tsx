@@ -42,7 +42,7 @@ function useEventCountdown(targetIso: string) {
     days: number;
     hours: number;
     minutes: number;
-  }>({ days: 35, hours: 0, minutes: 0 });
+  }>({ days: 24, hours: 0, minutes: 0 });
 
   React.useEffect(() => {
     const update = () => {
@@ -70,8 +70,8 @@ function downloadCalendarIcs() {
     "BEGIN:VEVENT",
     "UID:mendiola-fa-bulacan-christmas-2026@mendiolafc.ph",
     "DTSTAMP:20261110T000000Z",
-    "DTSTART:20261215T070000Z",
-    "DTEND:20261215T120000Z",
+    "DTSTART:20261205T070000Z",
+    "DTEND:20261205T120000Z",
     "SUMMARY:Mendiola Football Academy - Bulacan Christmas Party 2026",
     "DESCRIPTION:Official Mendiola FA Bulacan Christmas Party! Motif: Red and White. Venue: Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan.",
     "LOCATION:Valle Maria Mar\\, Sta. Cruz\\, Sta. Maria\\, Bulacan",
@@ -565,7 +565,7 @@ export function ChristmasRsvpExperience({
                 </span>
               </div>
               <p className="truncate text-[11px] font-medium text-zinc-500">
-                Dec 15, 2026 · 3:00 PM · Valle Maria Mar
+                Dec 5, 2026 · 3:00 PM · Valle Maria Mar
               </p>
             </div>
           </button>
@@ -749,10 +749,10 @@ export function ChristmasRsvpExperience({
                         Celebration Date &amp; Time
                       </div>
                       <div className="mt-0.5 text-sm font-extrabold text-zinc-950 sm:text-base">
-                        December 15, 2026
+                        December 5, 2026
                       </div>
                       <div className="mt-0.5 text-xs font-semibold text-zinc-600">
-                        Tuesday · 3:00 PM
+                        Saturday · 3:00 PM
                       </div>
                     </div>
                   </div>
@@ -1245,7 +1245,7 @@ export function ChristmasRsvpExperience({
                           {submittedRecord &&
                           submittedRecord.attendanceStatus === "Not Attending"
                             ? "Attendance response recorded"
-                            : "Dec 15, 2026 · 3:00 PM · Valle Maria Mar, Bulacan"}
+                            : "Dec 5, 2026 · 3:00 PM · Valle Maria Mar, Bulacan"}
                         </Dialog.Description>
                       </div>
                     </div>
@@ -1353,7 +1353,7 @@ export function ChristmasRsvpExperience({
                                   </dt>
                                   <dd className="font-bold text-zinc-950">
                                     Valle Maria Mar, Sta. Cruz, Sta. Maria,
-                                    Bulacan · Dec 15, 2026 @ 3:00 PM
+                                    Bulacan · Dec 5, 2026 @ 3:00 PM
                                   </dd>
                                 </div>
                               </>

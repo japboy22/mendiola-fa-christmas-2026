@@ -3,7 +3,7 @@
 Official Progressive Web App for **Mendiola Football Academy - Bulacan** Christmas Party 2026 confirmation of attendance.
 
 ## Event Details
-- **Date:** Tuesday, December 15, 2026
+- **Date:** Saturday, December 5, 2026
 - **Time:** 3:00 PM
 - **Venue:** Valle Maria Mar, Sta. Cruz, Sta. Maria, Bulacan
 - **Motif:** Red and White Motif (`#D91B23` & `#FFFFFF`)
